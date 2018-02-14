@@ -1,0 +1,19 @@
+monitors:
+  - name: View
+    command: [ 'curl', 'https://localhost:5000' ]
+    # environment:
+    #   PATH: ${PATH}
+    alerts: [ email, sms ]
+    # other settings from other health check apps like interval and back off
+
+alerts:
+  email:
+    command: echo 'Send an email'
+  sms:
+    command: echo 'Send an SMS'
+
+federation:
+  - location: https://host1.com
+    client_key: keyfromhost1
+    server_key: keyhost1uses
+    alerts: [ sms ]
