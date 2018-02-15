@@ -1,3 +1,5 @@
+interval: 5
+
 monitors:
   - name: View
     command: [ 'curl', 'https://localhost:5000' ]

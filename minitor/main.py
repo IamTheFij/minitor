@@ -1,5 +1,6 @@
 from subprocess import CalledProcessError
 from subprocess import check_call
+from time import sleep
 
 import yamlenv
 
@@ -27,13 +28,15 @@ def alert_for_monitor(monitor, alerts):
 
 def main():
     # TODO: get config file off command line
-    config = get_config('./sample-config.yml')
+    config = get_config('config.yml')
     alerts = config.get('alerts', {})
-    for monitor in config.get('monitors', []):
-        try:
-            check_monitor(monitor)
-        except CalledProcessError:
-            alert_for_monitor(monitor, alerts)
+    while True:
+        for monitor in config.get('monitors', []):
+            try:
+                check_monitor(monitor)
+            except CalledProcessError:
+                alert_for_monitor(monitor, alerts)
+        sleep(config.get('interval', 1))
 
 if __name__ == '__main__':
     main()
