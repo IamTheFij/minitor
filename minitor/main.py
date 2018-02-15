@@ -35,6 +35,7 @@ def main():
             try:
                 check_monitor(monitor)
             except CalledProcessError:
+                # Need some way to not alert EVERY time
                 alert_for_monitor(monitor, alerts)
         sleep(config.get('interval', 1))
 
