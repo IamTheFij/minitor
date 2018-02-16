@@ -1,3 +1,4 @@
+import logging
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
@@ -9,7 +10,10 @@ from time import sleep
 
 import yamlenv
 
-# TODO: validate on start
+
+logging.basicConfig(level=logging.INFO)
+logging.getLogger(__name__).addHandler(logging.NullHandler())
+
 
 def read_yaml(path):
     """Loads config from a YAML file with env interpolation"""
@@ -151,6 +155,9 @@ class Minitor(object):
     state = None
     check_interval = None
 
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
+
     def setup(self, config_path):
         """Load all setup from YAML file at provided path"""
         config = read_yaml(config_path)
@@ -214,12 +221,12 @@ class Minitor(object):
                 try:
                     result = monitor.check()
                     if result is not None:
-                        print('{}: {}'.format(
+                        self.logger.info('%s: %s',
                             monitor.name,
                             'SUCCESS' if result else 'FAILURE'
-                        ))
+                        )
                 except MinitorAlert as minitor_alert:
-                    print(minitor_alert)
+                    self.logger.warn(minitor_alert)
                     self.alert_for_monitor(monitor)
 
             sleep(self.check_interval)
