@@ -1,3 +1,4 @@
+import sys
 from argparse import ArgumentParser
 from datetime import datetime
 from os import environ
@@ -223,5 +224,14 @@ class Minitor(object):
 
             sleep(self.check_interval)
 
+
+def main():
+    try:
+        Minitor().run()
+    except KeyboardInterrupt:
+        pass
+    return 0
+
+
 if __name__ == '__main__':
-    Minitor().run()
+    sys.exit(main())

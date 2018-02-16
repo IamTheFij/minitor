@@ -14,7 +14,14 @@ I'm running a few small services and found Sensu, Consul, Nagios, etc. to all be
 
 ### Running
 
-Eventually it will be installed as python package, but for now:
+Install and execute with:
+
+```
+pip install -e git+https://git.iamthefij.com/iamthefij/minitor.git#egg=minitor
+minitor
+```
+
+If locally developing you can use:
 
 ```
 make run
