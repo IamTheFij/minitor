@@ -14,7 +14,7 @@ setup(
     description='A minimal monitoring tool',
     long_description=long_description,
     url='https://git.iamthefij.com/iamthefij/minitor',
-    download_url='https://git.iamthefij.com/iamthefij/minitor/archive/master.tar.gz'
+    download_url='https://git.iamthefij.com/iamthefij/minitor/archive/master.tar.gz',
     author='Ian Fijolek',
     author_email='ian@iamthefij.com',
     classifiers=[
