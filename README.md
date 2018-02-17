@@ -17,7 +17,7 @@ I'm running a few small services and found Sensu, Consul, Nagios, etc. to all be
 Install and execute with:
 
 ```
-pip install -e git+https://git.iamthefij.com/iamthefij/minitor.git#egg=minitor
+pip install minitor
 minitor
 ```
 
