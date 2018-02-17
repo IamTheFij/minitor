@@ -14,12 +14,12 @@ alerts:
   mailgun:
     command: >
       curl -s -X POST
-      -F subject="Alert! {alert_name} failed"
+      -F subject="Alert! {monitor_name} failed"
       -F from="Minitor <minitor@minitor.mon>"
       -F to=me@minitor.mon
       -F text="Our monitor failed"
       https://api.mailgun.net/v3/minitor.mon/messages
-      -u "api:${TWILIO_API_KEY}"
+      -u "api:${MAILGUN_API_KEY}"
   sms:
     command: >
       curl -s -X POST -F "Body=Failure: {monitor_name} has failed"
