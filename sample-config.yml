@@ -6,7 +6,7 @@ monitors:
     alerts: [ log, email, sms ]
     check_interval: 30
     alert_after: 3
-    alert_every: 4
+    alert_every: -1 # Defaults to -1 for exponential backoff
 
 alerts:
   email:

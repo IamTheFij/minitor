@@ -41,8 +41,8 @@ class Monitor(object):
         settings = {
             'alerts': [ 'log' ],
             'check_interval': 30,
-            'alert_after': 3,
-            'alert_every': 4,
+            'alert_after': 4,
+            'alert_every': -1,
         }
         settings.update(config)
         self.validate_settings(settings)
@@ -56,6 +56,7 @@ class Monitor(object):
 
         self.last_check = None
         self.failure_count = 0
+        self.alert_count = 0
 
     def validate_settings(self, settings):
         """Validates that settings for this Monitor are valid
@@ -112,13 +113,22 @@ class Monitor(object):
     def success(self):
         """Handles success tasks"""
         self.failure_count = 0
+        self.alert_count = 0
 
     def failure(self):
         """Handles failure tasks and possibly raises MinitorAlert"""
         self.failure_count += 1
-        min_failures = self.failure_count >= self.alert_after
-        failure_interval = (self.failure_count % self.alert_every) == 0
-        if min_failures and failure_interval:
+        if self.failure_count < self.alert_after:
+            return
+        if self.alert_every >= 0:
+            failure_interval = (self.failure_count % self.alert_every) == 0
+        else:
+            failure_interval = (
+                (self.failure_count - self.alert_after) >=
+                (2 ** self.alert_count)
+            )
+        if failure_interval:
+            self.alert_count += 1
             raise MinitorAlert('{} check has failed {} times'.format(
                 self.name, self.failure_count
             ))
