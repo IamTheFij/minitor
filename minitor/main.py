@@ -2,8 +2,6 @@ import logging
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from os import environ
-from subprocess import CalledProcessError
 from subprocess import call
 from subprocess import check_call
 from time import sleep
@@ -36,10 +34,11 @@ class MinitorAlert(Exception):
 
 class Monitor(object):
     """Primary configuration item for Minitor"""
+
     def __init__(self, config):
         """Accepts a dictionary of configuration items to override defaults"""
         settings = {
-            'alerts': [ 'log' ],
+            'alerts': ['log'],
             'check_interval': 30,
             'alert_after': 4,
             'alert_every': -1,
@@ -91,7 +90,7 @@ class Monitor(object):
         """Determines if this Monitor should run it's check command"""
         if not self.last_check:
             return True
-        since_last_check = (datetime.now()-self.last_check).total_seconds()
+        since_last_check = (datetime.now() - self.last_check).total_seconds()
         return since_last_check >= self.check_interval
 
     def check(self):
@@ -216,7 +215,7 @@ class Minitor(object):
             '--config', '-c',
             dest='config_path',
             default='config.yml',
-            help='Path to the config YAML file to use'
+            help='Path to the config YAML file to use',
         )
         return parser.parse_args()
 
@@ -231,7 +230,8 @@ class Minitor(object):
                 try:
                     result = monitor.check()
                     if result is not None:
-                        self.logger.info('%s: %s',
+                        self.logger.info(
+                            '%s: %s',
                             monitor.name,
                             'SUCCESS' if result else 'FAILURE'
                         )

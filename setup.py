@@ -1,6 +1,8 @@
-from setuptools import setup, find_packages
 from codecs import open
 from os import path
+
+from setuptools import find_packages
+from setuptools import setup
 
 here = path.abspath(path.dirname(__file__))
 
@@ -14,7 +16,9 @@ setup(
     description='A minimal monitoring tool',
     long_description=long_description,
     url='https://git.iamthefij.com/iamthefij/minitor',
-    download_url='https://git.iamthefij.com/iamthefij/minitor/archive/master.tar.gz',
+    download_url=(
+        'https://git.iamthefij.com/iamthefij/minitor/archive/master.tar.gz'
+    ),
     author='Ian Fijolek',
     author_email='ian@iamthefij.com',
     classifiers=[
