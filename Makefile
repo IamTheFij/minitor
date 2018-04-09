@@ -1,10 +1,14 @@
 env:
 	virtualenv -p python3 env
-	./env/bin/pip install -r requirements.txt
+	./env/bin/pip install -r requirements-dev.txt
 
 .PHONY: run
 run: env
 	./env/bin/python -m minitor.main
+
+.PHONY: test
+test: env
+	tox
 
 .PHONY: build
 build: env
@@ -22,3 +26,6 @@ upload-test: env
 .PHONY: clean
 clean:
 	rm -fr ./build ./dist ./minitor.egg-info
+
+install-hooks:
+	tox -e pre-commit -- install -f --install-hooks

@@ -1,3 +1,9 @@
 -r requirements.txt
+coverage
+flake8
+mock
+pre-commit
+pytest
+tox
 twine
 wheel

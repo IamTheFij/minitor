@@ -1,0 +1,24 @@
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v1.2.3
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: autopep8-wrapper
+        args:
+        - -i
+        - --ignore=E265,E309,E501
+      - id: debug-statements
+        language_version: python3
+      - id: flake8
+        language_version: python3
+      - id: check-yaml
+      - id: check-merge-conflict
+      - id: name-tests-test
+        exclude: tests/(common.py|util.py|(helpers|integration/factories)/(.+).py)
+  - repo: https://github.com/asottile/reorder_python_imports
+    sha: v1.0.1
+    hooks:
+    - id: reorder-python-imports
+      args:
+        - --py3-plus
