@@ -20,6 +20,50 @@ def read_yaml(path):
         return yamlenv.load(contents)
 
 
+def validate_monitor_settings(settings):
+    """Validates that settings for a Monitor are valid
+
+    Note: Cannot yet validate the Alerts exist from within this class.
+    That will be done by Minitor later
+    """
+    name = settings.get('name')
+    if not name:
+        raise InvalidMonitorException('Invalid name for monitor')
+    if not settings.get('command'):
+        raise InvalidMonitorException(
+            'Invalid command for monitor {}'.format(name)
+        )
+
+    type_assertions = (
+        ('check_interval', int),
+        ('alert_after', int),
+        ('alert_every', int),
+    )
+
+    for key, val_type in type_assertions:
+        val = settings.get(key)
+        if not isinstance(val, val_type):
+            raise InvalidMonitorException(
+                'Invalid type on {}: {}. Expected {} and found {}'.format(
+                    name, key, val_type.__name__, type(val).__name__
+                )
+            )
+
+    non_zero = (
+        'check_interval',
+        'alert_after',
+        'alert_every',
+    )
+
+    for key in non_zero:
+        if settings.get(key) == 0:
+            raise InvalidMonitorException(
+                'Invalid value for {}: {}. Value cannot be 0'.format(
+                    name, key
+                )
+            )
+
+
 class InvalidAlertException(Exception):
     pass
 
@@ -44,7 +88,7 @@ class Monitor(object):
             'alert_every': -1,
         }
         settings.update(config)
-        self.validate_settings(settings)
+        validate_monitor_settings(settings)
 
         self.name = settings['name']
         self.command = settings['command']
@@ -54,37 +98,8 @@ class Monitor(object):
         self.alert_every = settings.get('alert_every')
 
         self.last_check = None
-        self.failure_count = 0
+        self.total_failure_count = 0
         self.alert_count = 0
-
-    def validate_settings(self, settings):
-        """Validates that settings for this Monitor are valid
-
-        Note: Cannot yet validate the Alerts exist from within this class.
-        That will be done by Minitor later
-        """
-        name = settings.get('name')
-        if not name:
-            raise InvalidMonitorException('Invalid name for monitor')
-        if not settings.get('command'):
-            raise InvalidMonitorException(
-                'Invalid command for monitor {}'.format(name)
-            )
-
-        type_assertions = (
-            ('check_interval', int),
-            ('alert_after', int),
-            ('alert_every', int),
-        )
-
-        for key, val_type in type_assertions:
-            val = settings.get(key)
-            if not isinstance(val, val_type):
-                raise InvalidMonitorException(
-                    'Invalid type on {} {}. Expected {} and found {}'.format(
-                        name, key, val_type.__name__, type(val).__name__
-                    )
-                )
 
     def should_check(self):
         """Determines if this Monitor should run it's check command"""
@@ -111,25 +126,27 @@ class Monitor(object):
 
     def success(self):
         """Handles success tasks"""
-        self.failure_count = 0
+        self.total_failure_count = 0
         self.alert_count = 0
 
     def failure(self):
         """Handles failure tasks and possibly raises MinitorAlert"""
-        self.failure_count += 1
-        if self.failure_count < self.alert_after:
+        self.total_failure_count += 1
+        # Ensure we've hit the  minimum number of failures to alert
+        if self.total_failure_count < self.alert_after:
             return
-        if self.alert_every >= 0:
-            failure_interval = (self.failure_count % self.alert_every) == 0
+
+        failure_count = (self.total_failure_count - self.alert_after)
+        if self.alert_every > 0:
+            # Otherwise, we should check against our alert_every
+            should_alert = (failure_count % self.alert_every) == 0
         else:
-            failure_interval = (
-                (self.failure_count - self.alert_after) >=
-                (2 ** self.alert_count)
-            )
-        if failure_interval:
+            should_alert = (failure_count >= (2 ** self.alert_count) - 1)
+
+        if should_alert:
             self.alert_count += 1
             raise MinitorAlert('{} check has failed {} times'.format(
-                self.name, self.failure_count
+                self.name, self.total_failure_count
             ))
 
 
