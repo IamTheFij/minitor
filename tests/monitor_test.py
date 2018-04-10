@@ -11,7 +11,7 @@ class TestMonitor(object):
     @pytest.fixture
     def monitor(self):
         return Monitor({
-            'name': 'SampleMonitor',
+            'name': 'Sample Monitor',
             'command': ['echo', 'foo'],
         })
 

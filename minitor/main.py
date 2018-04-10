@@ -1,15 +1,19 @@
 import logging
+import subprocess
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
-from subprocess import call
-from subprocess import check_call
+from subprocess import CalledProcessError
+from subprocess import check_output
 from time import sleep
 
 import yamlenv
 
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 
@@ -64,6 +68,27 @@ def validate_monitor_settings(settings):
             )
 
 
+def maybe_decode(bstr, encoding='utf-8'):
+    try:
+        return bstr.decode(encoding)
+    except TypeError:
+        return bstr
+
+
+def call_output(*popenargs, **kwargs):
+    """Similar to check_output, but instead returns output and exception"""
+    # So we can capture complete output, redirect sderr to stdout
+    kwargs.setdefault('stderr', subprocess.STDOUT)
+    output, ex = None, None
+    try:
+        output = check_output(*popenargs, **kwargs)
+    except CalledProcessError as e:
+        output, ex = e.output, e
+
+    output = output.rstrip(b'\n')
+    return output, ex
+
+
 class InvalidAlertException(Exception):
     pass
 
@@ -101,6 +126,10 @@ class Monitor(object):
         self.total_failure_count = 0
         self.alert_count = 0
 
+        self.logger = logging.getLogger(
+            '{}({})'.format(self.__class__.__name__, self.name)
+        )
+
     def should_check(self):
         """Determines if this Monitor should run it's check command"""
         if not self.last_check:
@@ -115,9 +144,15 @@ class Monitor(object):
         """
         if not self.should_check():
             return None
-        result = call(self.command, shell=isinstance(self.command, str))
+
+        output, ex = call_output(
+            self.command,
+            shell=isinstance(self.command, str),
+        )
+        self.logger.debug(output)
         self.last_check = datetime.now()
-        if result == 0:
+
+        if ex is None:
             self.success()
             return True
         else:
@@ -158,6 +193,10 @@ class Alert(object):
         if not self.command:
             raise InvalidAlertException('Invalid alert {}'.format(self.name))
 
+        self.logger = logging.getLogger(
+            '{}({})'.format(self.__class__.__name__, self.name)
+        )
+
     def _formated_command(self, **kwargs):
         """Formats command array or string with kwargs from Monitor"""
         if isinstance(self.command, str):
@@ -169,10 +208,13 @@ class Alert(object):
 
     def alert(self, monitor):
         """Calls the alert command for the provided monitor"""
-        check_call(
+        output, ex = call_output(
             self._formated_command(monitor_name=monitor.name),
             shell=isinstance(self.command, str),
         )
+        self.logger.error(maybe_decode(output))
+        if ex is not None:
+            raise ex
 
 
 class Minitor(object):
@@ -182,7 +224,7 @@ class Minitor(object):
     check_interval = None
 
     def __init__(self):
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(self.__class__.__name__)
 
     def setup(self, config_path):
         """Load all setup from YAML file at provided path"""
