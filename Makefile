@@ -11,7 +11,7 @@ test: env
 	tox
 
 .PHONY: build
-build: env
+build: test
 	./env/bin/python setup.py sdist
 	./env/bin/python setup.py bdist_wheel
 
@@ -27,5 +27,6 @@ upload-test: env
 clean:
 	rm -fr ./build ./dist ./minitor.egg-info
 
+.PHONY: install-hooks
 install-hooks:
 	tox -e pre-commit -- install -f --install-hooks
