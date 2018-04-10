@@ -25,8 +25,22 @@ upload-test: env
 
 .PHONY: clean
 clean:
-	rm -fr ./build ./dist ./minitor.egg-info
+	rm -fr ./build ./minitor.egg-info ./htmlcov ./.coverage ./.pytest_cache ./.tox
+
+.PHONY: dist-clean
+dist-clean: clean
+	rm -fr ./dist
 
 .PHONY: install-hooks
 install-hooks:
 	tox -e pre-commit -- install -f --install-hooks
+
+.coverage:
+	tox
+
+htmlcov/index.html: .coverage
+	./env/bin/coverage html
+
+.PHONY: open-coverage
+open-coverage: htmlcov/index.html
+	open htmlcov/index.html
