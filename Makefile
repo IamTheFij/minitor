@@ -1,5 +1,8 @@
+# Try to use python3 -m venv, but fallback to virtualenv just in case
+VENV := $(shell python3 -m venv --help &> /dev/null && echo 'python3 -m venv' || echo 'virtualenv -p python3')
+
 env:
-	python3 -m venv env
+	$(VENV) env
 	./env/bin/pip install -r requirements-dev.txt
 
 .PHONY: run
