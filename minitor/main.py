@@ -209,7 +209,11 @@ class Alert(object):
     def alert(self, monitor):
         """Calls the alert command for the provided monitor"""
         output, ex = call_output(
-            self._formated_command(monitor_name=monitor.name),
+            self._formated_command(
+                alert_count=monitor.alert_count,
+                monitor_name=monitor.name,
+                failure_count=monitor.total_failure_count,
+            ),
             shell=isinstance(self.command, str),
         )
         self.logger.error(maybe_decode(output))

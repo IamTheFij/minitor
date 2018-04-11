@@ -19,10 +19,22 @@ class TestAlert(object):
     def echo_alert(self):
         return Alert(
             'log',
-            {'command': ['echo', '{monitor_name} has failed!']}
+            {
+                'command': [
+                    'echo', (
+                        '{monitor_name} has failed {failure_count} time(s)!\n'
+                        'We have alerted {alert_count} time(s)'
+                    )
+                ]
+            }
         )
 
     def test_simple_alert(self, monitor, echo_alert):
+        monitor.total_failure_count = 1
+        monitor.alert_count = 1
         with patch.object(echo_alert.logger, 'error') as mock_error:
             echo_alert.alert(monitor)
-        mock_error.assert_called_once_with('Dummy Monitor has failed!')
+        mock_error.assert_called_once_with(
+            'Dummy Monitor has failed 1 time(s)!\n'
+            'We have alerted 1 time(s)'
+        )
