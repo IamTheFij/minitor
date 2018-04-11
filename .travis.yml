@@ -1,0 +1,10 @@
+language: generic
+before_install:
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq python3.4 python3-pip python3.4-venv
+install:
+  - python3 -m venv env
+  - ./env/bin/pip install -U setuptools
+  - ./env/bin/pip install tox
+script:
+  - make test
