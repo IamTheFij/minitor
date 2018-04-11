@@ -10,5 +10,5 @@ class TestMinitor(object):
         assert ex is None
 
         output, ex = call_output(['ls', '--not-a-real-flag'])
-        assert output.startswith(b'ls: illegal option')
+        assert output.startswith(b'ls: ')
         assert ex is not None
