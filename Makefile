@@ -11,7 +11,7 @@ test: env
 	./env/bin/tox
 
 .PHONY: build
-build: test
+build: env
 	./env/bin/python setup.py sdist
 	./env/bin/python setup.py bdist_wheel
 

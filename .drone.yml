@@ -1,0 +1,10 @@
+workspace:
+  base: /app
+  path: .
+
+pipeline:
+  build:
+    image: python:3
+    commands:
+      - make test
+      - make build
