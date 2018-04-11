@@ -9,7 +9,6 @@ from time import sleep
 
 import yamlenv
 
-
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(name)s %(message)s'
@@ -97,7 +96,11 @@ class InvalidMonitorException(Exception):
     pass
 
 
-class MinitorAlert(Exception):
+class MinitorAlertEvent(Exception):
+    pass
+
+
+class MinitorReachableEvent(Exception):
     pass
 
 
@@ -121,10 +124,12 @@ class Monitor(object):
         self.check_interval = settings.get('check_interval')
         self.alert_after = settings.get('alert_after')
         self.alert_every = settings.get('alert_every')
+        self.alerts_up = settings.get('alerts_up', [])
 
         self.last_check = None
         self.total_failure_count = 0
         self.alert_count = 0
+        self.is_failure = False
 
         self.logger = logging.getLogger(
             '{}({})'.format(self.__class__.__name__, self.name)
@@ -164,6 +169,10 @@ class Monitor(object):
         self.total_failure_count = 0
         self.alert_count = 0
 
+        if self.is_failure:
+            self.is_failure = False
+            raise MinitorReachableEvent('{} is back online!'.format(self.name))
+
     def failure(self):
         """Handles failure tasks and possibly raises MinitorAlert"""
         self.total_failure_count += 1
@@ -180,7 +189,8 @@ class Monitor(object):
 
         if should_alert:
             self.alert_count += 1
-            raise MinitorAlert('{} check has failed {} times'.format(
+            self.is_failure = True
+            raise MinitorAlertEvent('{} check has failed {} times'.format(
                 self.name, self.total_failure_count
             ))
 
@@ -237,9 +247,13 @@ class Minitor(object):
         self.monitors = [Monitor(mon) for mon in config.get('monitors', [])]
         # Add default alert for logging
         self.alerts = {
-            'log': Alert(
-                'log',
+            'log_down': Alert(
+                'log_down',
                 {'command': ['echo', '{monitor_name} has failed!']}
+            ),
+            'log_up': Alert(
+                'log_up',
+                {'command': ['echo', '{monitor_name} seems to be working fine now!']}
             )
         }
         self.alerts.update({
@@ -266,9 +280,14 @@ class Minitor(object):
                         )
                     )
 
-    def alert_for_monitor(self, monitor):
+    def on_alert_event(self, monitor):
         """Issues all alerts for a provided monitor"""
         for alert in monitor.alerts:
+            self.alerts[alert].alert(monitor)
+
+    def on_reachable_event(self, monitor):
+        """Issues all alerts for a provided monitor"""
+        for alert in monitor.alerts_up:
             self.alerts[alert].alert(monitor)
 
     def parse_args(self):
@@ -298,9 +317,12 @@ class Minitor(object):
                             monitor.name,
                             'SUCCESS' if result else 'FAILURE'
                         )
-                except MinitorAlert as minitor_alert:
-                    self.logger.warn(minitor_alert)
-                    self.alert_for_monitor(monitor)
+                except MinitorAlertEvent as event:
+                    self.logger.warn(event)
+                    self.on_alert_event(monitor)
+                except MinitorReachableEvent as event:
+                    self.logger.info(event)
+                    self.on_reachable_event(monitor)
 
             sleep(self.check_interval)
 

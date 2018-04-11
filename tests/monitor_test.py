@@ -1,7 +1,7 @@
 import pytest
 
 from minitor.main import InvalidMonitorException
-from minitor.main import MinitorAlert
+from minitor.main import MinitorAlertEvent
 from minitor.main import Monitor
 from minitor.main import validate_monitor_settings
 
@@ -46,7 +46,7 @@ class TestMonitor(object):
             monitor.failure()
 
         # this time should raise an alert
-        with pytest.raises(MinitorAlert):
+        with pytest.raises(MinitorAlertEvent):
             monitor.failure()
 
     @pytest.mark.parametrize(
@@ -68,7 +68,7 @@ class TestMonitor(object):
             monitor.failure()
 
         # this time should raise an alert
-        with pytest.raises(MinitorAlert):
+        with pytest.raises(MinitorAlertEvent):
             monitor.failure()
 
         # fail a bunch more times until the next alert
@@ -76,7 +76,7 @@ class TestMonitor(object):
             monitor.failure()
 
         # this failure should alert now
-        with pytest.raises(MinitorAlert):
+        with pytest.raises(MinitorAlertEvent):
             monitor.failure()
 
     def test_monitor_alert_every_exponential(self, monitor):
@@ -88,7 +88,7 @@ class TestMonitor(object):
 
         for i in range(failure_count):
             if i + 1 in expect_failures_on:
-                with pytest.raises(MinitorAlert):
+                with pytest.raises(MinitorAlertEvent):
                     monitor.failure()
             else:
                 monitor.failure()
