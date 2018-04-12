@@ -3,8 +3,22 @@ workspace:
   path: .
 
 pipeline:
-  build:
+  test:
     image: python:3
     commands:
+      - python3 -m venv env
+      - ./env/bin/pip install tox
       - make test
-      - make build
+  push_to_pypi:
+    image: python:3
+    commands:
+      - ./env/bin/pip install twine
+      - make upload-test
+    secrets:
+      - source: PYPI_USERNAME
+        target: TWINE_USERNAME
+      - source: PYPI_PASSWORD
+        target: TWINE_PASSWORD
+    when:
+      event: tag
+      branch: master
