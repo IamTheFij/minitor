@@ -38,4 +38,5 @@ In this repo, you can explore the `sample-config.yml` file for an example, but t
 Whether you're looking to submit a patch or just tell me I broke something, you can contribute through the Github mirror and I can merge PRs back to the source repository.
 
 Primary Repo: https://git.iamthefij.com/iamthefij/minitor.git
+
 Github Mirror: https://github.com/IamTheFij/minitor.git
