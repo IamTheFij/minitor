@@ -6,14 +6,11 @@ pipeline:
   test:
     image: python:3
     commands:
-      - python3 -m venv env
-      - ./env/bin/pip install tox
-      - make test
+      - make test-env test
   push_to_pypi:
     image: python:3
     commands:
-      - ./env/bin/pip install twine
-      - make upload-test
+      - make build-env upload-test
     secrets:
       - source: PYPI_USERNAME
         target: TWINE_USERNAME
