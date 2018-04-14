@@ -123,6 +123,7 @@ class Monitor(object):
         self.alert_every = settings.get('alert_every')
 
         self.last_check = None
+        self.last_success = None
         self.total_failure_count = 0
         self.alert_count = 0
 
@@ -163,6 +164,7 @@ class Monitor(object):
         """Handles success tasks"""
         self.total_failure_count = 0
         self.alert_count = 0
+        self.last_success = datetime.now()
 
     def failure(self):
         """Handles failure tasks and possibly raises MinitorAlert"""
@@ -206,6 +208,12 @@ class Alert(object):
             args.append(arg.format(**kwargs))
         return args
 
+    def _format_datetime(self, dt):
+        """Formats a datetime for an alert"""
+        if dt is None:
+            return 'Never'
+        return dt.isoformat()
+
     def alert(self, monitor):
         """Calls the alert command for the provided monitor"""
         output, ex = call_output(
@@ -213,6 +221,7 @@ class Alert(object):
                 alert_count=monitor.alert_count,
                 monitor_name=monitor.name,
                 failure_count=monitor.total_failure_count,
+                last_success=self._format_datetime(monitor.last_success),
             ),
             shell=isinstance(self.command, str),
         )
