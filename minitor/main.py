@@ -98,7 +98,9 @@ class InvalidMonitorException(Exception):
 
 
 class MinitorAlert(Exception):
-    pass
+    def __init__(self, message, monitor):
+        super().__init__(message)
+        self.monitor = monitor
 
 
 class Monitor(object):
@@ -117,7 +119,10 @@ class Monitor(object):
 
         self.name = settings['name']
         self.command = settings['command']
-        self.alerts = settings.get('alerts', [])
+        self.alert_down = settings.get('alert_down', [])
+        if not self.alert_down:
+            self.alert_down = settings.get('alerts', [])
+        self.alert_up = settings.get('alert_up', [])
         self.check_interval = settings.get('check_interval')
         self.alert_after = settings.get('alert_after')
         self.alert_every = settings.get('alert_every')
@@ -162,9 +167,17 @@ class Monitor(object):
 
     def success(self):
         """Handles success tasks"""
+        back_up = None
+        if not self.is_up():
+            back_up = MinitorAlert(
+                '{} check is up again!'.format(self.name),
+                self,
+            )
         self.total_failure_count = 0
         self.alert_count = 0
         self.last_success = datetime.now()
+        if back_up:
+            raise back_up
 
     def failure(self):
         """Handles failure tasks and possibly raises MinitorAlert"""
@@ -182,9 +195,16 @@ class Monitor(object):
 
         if should_alert:
             self.alert_count += 1
-            raise MinitorAlert('{} check has failed {} times'.format(
-                self.name, self.total_failure_count
-            ))
+            raise MinitorAlert(
+                '{} check has failed {} times'.format(
+                    self.name, self.total_failure_count
+                ),
+                self
+            )
+
+    def is_up(self):
+        """Indicates if the monitor is already alerting failures"""
+        return self.alert_count == 0
 
 
 class Alert(object):
@@ -214,11 +234,12 @@ class Alert(object):
             return 'Never'
         return dt.isoformat()
 
-    def alert(self, monitor):
+    def alert(self, message, monitor):
         """Calls the alert command for the provided monitor"""
         output, ex = call_output(
             self._formated_command(
                 alert_count=monitor.alert_count,
+                alert_message=message,
                 monitor_name=monitor.name,
                 failure_count=monitor.total_failure_count,
                 last_success=self._format_datetime(monitor.last_success),
@@ -248,7 +269,7 @@ class Minitor(object):
         self.alerts = {
             'log': Alert(
                 'log',
-                {'command': ['echo', '{monitor_name} has failed!']}
+                {'command': ['echo', '{alert_message}!']}
             )
         }
         self.alerts.update({
@@ -275,10 +296,12 @@ class Minitor(object):
                         )
                     )
 
-    def alert_for_monitor(self, monitor):
+    def handle_minitor_alert(self, minitor_alert):
         """Issues all alerts for a provided monitor"""
-        for alert in monitor.alerts:
-            self.alerts[alert].alert(monitor)
+        monitor = minitor_alert.monitor
+        alerts = monitor.alert_up if monitor.is_up() else monitor.alert_down
+        for alert in alerts:
+            self.alerts[alert].alert(str(minitor_alert), monitor)
 
     def parse_args(self):
         """Parses command line arguments and returns them"""
@@ -309,7 +332,7 @@ class Minitor(object):
                         )
                 except MinitorAlert as minitor_alert:
                     self.logger.warn(minitor_alert)
-                    self.alert_for_monitor(monitor)
+                    self.handle_minitor_alert(minitor_alert)
 
             sleep(self.check_interval)
 

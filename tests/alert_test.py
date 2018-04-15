@@ -32,20 +32,26 @@ class TestAlert(object):
         )
 
     @pytest.mark.parametrize(
-        'last_success',
+        'last_success,expected_success',
         [
             (None, 'Never'),
             (datetime(2018, 4, 10), '2018-04-10T00:00:00')
         ]
     )
-    def test_simple_alert(self, monitor, echo_alert, last_success):
+    def test_simple_alert(
+        self,
+        monitor,
+        echo_alert,
+        last_success,
+        expected_success
+    ):
         monitor.total_failure_count = 1
         monitor.alert_count = 1
-        monitor.last_success = last_success[0]
+        monitor.last_success = last_success
         with patch.object(echo_alert.logger, 'error') as mock_error:
-            echo_alert.alert(monitor)
+            echo_alert.alert('Exception message', monitor)
         mock_error.assert_called_once_with(
             'Dummy Monitor has failed 1 time(s)!\n'
             'We have alerted 1 time(s)\n'
-            'Last success was ' + last_success[1]
+            'Last success was ' + expected_success
         )

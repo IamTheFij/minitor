@@ -1,3 +1,6 @@
+from datetime import datetime
+from unittest.mock import patch
+
 import pytest
 
 from minitor.main import InvalidMonitorException
@@ -13,6 +16,11 @@ class TestMonitor(object):
         return Monitor({
             'name': 'Sample Monitor',
             'command': ['echo', 'foo'],
+            'alert_down': ['log'],
+            'alert_up': ['log'],
+            'check_interval': 1,
+            'alert_after': 1,
+            'alert_every': 1,
         })
 
     @pytest.mark.parametrize('settings', [
@@ -92,3 +100,42 @@ class TestMonitor(object):
                     monitor.failure()
             else:
                 monitor.failure()
+
+    @pytest.mark.parametrize('last_check', [None, datetime(2018, 4, 10)])
+    def test_monitor_should_check(self, monitor, last_check):
+        monitor.last_check = last_check
+        assert monitor.should_check()
+
+    def test_monitor_check_fail(self, monitor):
+        with patch.object(monitor, 'failure') as mock_failure:
+            monitor.command = ['ls', '--not-real']
+            assert not monitor.check()
+            mock_failure.assert_called_once()
+
+    def test_monitor_check_success(self, monitor):
+        with patch.object(monitor, 'success') as mock_success:
+            assert monitor.check()
+            mock_success.assert_called_once()
+
+    @pytest.mark.parametrize('failure_count', [0, 1])
+    def test_monitor_success(self, monitor, failure_count):
+        monitor.alert_count = 0
+        monitor.total_failure_count = failure_count
+        assert monitor.last_success is None
+
+        monitor.success()
+
+        assert monitor.alert_count == 0
+        assert monitor.last_success is not None
+        assert monitor.total_failure_count == 0
+
+    def test_monitor_success_back_up(self, monitor):
+        monitor.total_failure_count = 1
+        monitor.alert_count = 1
+
+        with pytest.raises(MinitorAlert):
+            monitor.success()
+
+        assert monitor.alert_count == 0
+        assert monitor.last_success is not None
+        assert monitor.total_failure_count == 0
