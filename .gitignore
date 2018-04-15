@@ -60,3 +60,8 @@ docs/_build/
 target/
 
 config.yml
+
+# IDE (IntelliJ IDEA)
+.idea/
+*.iml
+venv/
