@@ -1,3 +1,5 @@
+OPEN_CMD := $(shell type xdg-open > /dev/null && echo 'xdg-open' || echo 'open')
+
 .PHONY: default
 default: test
 
@@ -74,7 +76,7 @@ install-hooks: env
 htmlcov/index.html: .coverage
 	./env/bin/coverage html
 
-# Opens coverage html in browser (on macOS)
+# Opens coverage html in browser (on macOS and some Linux systems)
 .PHONY: open-coverage
 open-coverage: htmlcov/index.html
-	open htmlcov/index.html
+	$(OPEN_CMD) htmlcov/index.html
