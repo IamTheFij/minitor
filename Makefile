@@ -1,3 +1,4 @@
+DOCKER_TAG := minitor-dev
 OPEN_CMD := $(shell type xdg-open > /dev/null && echo 'xdg-open' || echo 'open')
 
 .PHONY: default
@@ -80,3 +81,7 @@ htmlcov/index.html: .coverage
 .PHONY: open-coverage
 open-coverage: htmlcov/index.html
 	$(OPEN_CMD) htmlcov/index.html
+
+.PHONY: docker-build
+docker-build:
+	docker build . -t $(DOCKER_TAG)
