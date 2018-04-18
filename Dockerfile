@@ -1,6 +1,11 @@
 FROM python:3
 
-RUN pip install --no-cache-dir minitor
+COPY ./sample-config.yml /app/config.yml
 WORKDIR /app
-COPY config.yml /app/config.yml
-CMD minitor
+
+COPY ./README.md /app/
+COPY ./setup.py /app/
+COPY ./minitor /app/minitor
+RUN pip install -e .
+
+ENTRYPOINT python -m minitor.main
