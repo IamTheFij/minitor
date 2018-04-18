@@ -29,6 +29,17 @@ make run
 
 It will read the contents of `config.yml` and begin its loop. You could also run it directly and provide a new config file via the `--config` argument.
 
+
+#### Docker
+
+You can pull this repository directly from Docker:
+
+`docker pull kevineaton/minitor`
+
+The Docker image uses a default `config.yml` that is copied from `sample-config.yml`. This won't really do anything for you, so when you run the Docker image, you should supply your own `config.yml` file:
+
+`docker run -v $PWD/config.yml:/app/config.yml kevineaton/minitor`
+
 ### Configuring
 
 In this repo, you can explore the `sample-config.yml` file for an example, but the general structure is as follows. It should be noted that environment variable interpolation happens on load of the YAML file. Also, when alerts are executed, they will be passed through Python's format function with arguments for some attributes of the Monitor. Currently this is limited to `{monitor_name}`.
