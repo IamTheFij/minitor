@@ -18,4 +18,11 @@ pipeline:
         target: TWINE_PASSWORD
     when:
       event: tag
-      branch: master
+  notify:
+    image: drillster/drone-email
+    host: $SMTP_HOST
+    username: $SMTP_USER
+    password: $SMTP_PASS
+    from: drone@iamthefij.com
+    when:
+      status: [ changed, failure ]
