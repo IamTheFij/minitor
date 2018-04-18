@@ -10,7 +10,7 @@ pipeline:
   push_to_pypi:
     image: python:3
     commands:
-      - make build-env upload-test
+      - make build-env upload
     secrets:
       - source: PYPI_USERNAME
         target: TWINE_USERNAME
