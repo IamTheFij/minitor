@@ -34,13 +34,11 @@ It will read the contents of `config.yml` and begin its loop. You could also run
 
 You can pull this repository directly from Docker:
 
-`docker pull kevineaton/minitor`
+`docker pull iamthefij/minitor`
 
-The Docker image uses a default `config.yml` that simply pings a server every 30 seconds with exponential backup. This is likely not what you want, so when you run the Docker image, you should supply your own `config.yml` file:
+The Docker image uses a default `config.yml` that is copied from `sample-config.yml`. This won't really do anything for you, so when you run the Docker image, you should supply your own `config.yml` file:
 
-`docker run -v $PWD/config.yml:/app/config.yml kevineaton/minitor`
-
-Note that the image uses the version of minitor in `pip` and does not build from source.
+`docker run -v $PWD/config.yml:/app/config.yml iamthefij/minitor`
 
 ### Configuring
 
