@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='minitor',
-    version='0.1.4',
+    version='0.2.0',
     description='A minimal monitoring tool',
     long_description=long_description,
     url='https://git.iamthefij.com/iamthefij/minitor',
