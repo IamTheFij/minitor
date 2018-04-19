@@ -40,7 +40,8 @@ build: env
 # Verify that the python version matches the git tag so we don't push bad shas
 .PHONY: verify-tag-version
 verify-tag-version:
-	test "v$(shell python setup.py -V)" = "$(shell git describe --tags --exact-match)"
+	$(eval TAG_NAME = $(shell [ -n "$(DRONE_TAG)" ] && echo $(DRONE_TAG) || git describe --tags --exact-match))
+	test "v$(shell python setup.py -V)" = "$(TAG_NAME)"
 
 # Uses twine to upload to pypi
 .PHONY: upload
