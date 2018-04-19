@@ -25,7 +25,8 @@ class TestAlert(object):
                     'echo', (
                         '{monitor_name} has failed {failure_count} time(s)!\n'
                         'We have alerted {alert_count} time(s)\n'
-                        'Last success was {last_success}'
+                        'Last success was {last_success}\n'
+                        'Last output was: {last_output}'
                     )
                 ]
             }
@@ -45,13 +46,15 @@ class TestAlert(object):
         last_success,
         expected_success
     ):
-        monitor.total_failure_count = 1
         monitor.alert_count = 1
+        monitor.last_output = 'beep boop'
         monitor.last_success = last_success
+        monitor.total_failure_count = 1
         with patch.object(echo_alert.logger, 'error') as mock_error:
             echo_alert.alert('Exception message', monitor)
         mock_error.assert_called_once_with(
             'Dummy Monitor has failed 1 time(s)!\n'
             'We have alerted 1 time(s)\n'
-            'Last success was ' + expected_success
+            'Last success was ' + expected_success + '\n'
+            'Last output was: beep boop'
         )

@@ -42,7 +42,16 @@ The Docker image uses a default `config.yml` that is copied from `sample-config.
 
 ### Configuring
 
-In this repo, you can explore the `sample-config.yml` file for an example, but the general structure is as follows. It should be noted that environment variable interpolation happens on load of the YAML file. Also, when alerts are executed, they will be passed through Python's format function with arguments for some attributes of the Monitor. Currently this is limited to `{monitor_name}`.
+In this repo, you can explore the `sample-config.yml` file for an example, but the general structure is as follows. It should be noted that environment variable interpolation happens on load of the YAML file. Also, when alerts are executed, they will be passed through Python's format function with arguments for some attributes of the Monitor. The following monitor specific variables can be referenced using Python formatting syntax:
+
+|token|value|
+|---|---|
+|`{alert_count}`|Number of times this monitor has alerted|
+|`{alert_message}`|The exception message that was raised|
+|`{failure_count}`|The total number of sequential failed checks for this monitor|
+|`{last_output}`|The last returned value from the check command to either stderr or stdout|
+|`{last_success}`|The ISO datetime of the last successful check|
+|`{monitor_name}`|The name of the monitor that failed and triggered the alert|
 
 ## Contributing
 

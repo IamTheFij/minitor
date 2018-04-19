@@ -1,5 +1,5 @@
 DOCKER_TAG := minitor-dev
-OPEN_CMD := $(shell type xdg-open > /dev/null && echo 'xdg-open' || echo 'open')
+OPEN_CMD := $(shell type xdg-open &> /dev/null && echo 'xdg-open' || echo 'open')
 
 .PHONY: default
 default: test

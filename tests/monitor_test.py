@@ -107,15 +107,19 @@ class TestMonitor(object):
         assert monitor.should_check()
 
     def test_monitor_check_fail(self, monitor):
+        assert monitor.last_output is None
         with patch.object(monitor, 'failure') as mock_failure:
             monitor.command = ['ls', '--not-real']
             assert not monitor.check()
             mock_failure.assert_called_once()
+            assert monitor.last_output is not None
 
     def test_monitor_check_success(self, monitor):
+        assert monitor.last_output is None
         with patch.object(monitor, 'success') as mock_success:
             assert monitor.check()
             mock_success.assert_called_once()
+            assert monitor.last_output is not None
 
     @pytest.mark.parametrize('failure_count', [0, 1])
     def test_monitor_success(self, monitor, failure_count):

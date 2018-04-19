@@ -127,10 +127,11 @@ class Monitor(object):
         self.alert_after = settings.get('alert_after')
         self.alert_every = settings.get('alert_every')
 
+        self.alert_count = 0
         self.last_check = None
+        self.last_output = None
         self.last_success = None
         self.total_failure_count = 0
-        self.alert_count = 0
 
         self.logger = logging.getLogger(
             '{}({})'.format(self.__class__.__name__, self.name)
@@ -155,8 +156,10 @@ class Monitor(object):
             self.command,
             shell=isinstance(self.command, str),
         )
+        output = maybe_decode(output)
         self.logger.debug(output)
         self.last_check = datetime.now()
+        self.last_output = output
 
         if ex is None:
             self.success()
@@ -240,9 +243,10 @@ class Alert(object):
             self._formated_command(
                 alert_count=monitor.alert_count,
                 alert_message=message,
-                monitor_name=monitor.name,
                 failure_count=monitor.total_failure_count,
+                last_output=monitor.last_output,
                 last_success=self._format_datetime(monitor.last_success),
+                monitor_name=monitor.name,
             ),
             shell=isinstance(self.command, str),
         )
