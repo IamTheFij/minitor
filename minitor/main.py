@@ -3,6 +3,7 @@ import subprocess
 import sys
 from argparse import ArgumentParser
 from datetime import datetime
+from itertools import chain
 from subprocess import CalledProcessError
 from subprocess import check_output
 from time import sleep
@@ -292,7 +293,7 @@ class Minitor(object):
                     )
                 )
             # Validate that the the alerts for the monitor exist
-            for alert in monitor.alerts:
+            for alert in chain(monitor.alert_down, monitor.alert_up):
                 if alert not in self.alerts:
                     raise InvalidMonitorException(
                         'Monitor {} contains an unknown alert: {}'.format(
