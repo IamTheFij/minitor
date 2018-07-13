@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='minitor',
-    version='0.2.1',
+    version='0.3.0',
     description='A minimal monitoring tool',
     long_description=long_description,
     url='https://git.iamthefij.com/iamthefij/minitor',
@@ -38,6 +38,7 @@ setup(
     keywords='minitor monitoring alerting',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     install_requires=[
+        'prometheus_client',
         'yamlenv',
     ],
     entry_points={

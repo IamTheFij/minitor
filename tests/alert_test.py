@@ -50,7 +50,7 @@ class TestAlert(object):
         monitor.last_output = 'beep boop'
         monitor.last_success = last_success
         monitor.total_failure_count = 1
-        with patch.object(echo_alert.logger, 'error') as mock_error:
+        with patch.object(echo_alert._logger, 'error') as mock_error:
             echo_alert.alert('Exception message', monitor)
         mock_error.assert_called_once_with(
             'Dummy Monitor has failed 1 time(s)!\n'

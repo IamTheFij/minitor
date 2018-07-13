@@ -9,8 +9,12 @@ from subprocess import check_output
 from time import sleep
 
 import yamlenv
+from prometheus_client import Counter
+from prometheus_client import Gauge
+from prometheus_client import start_http_server
 
 
+DEFAULT_METRICS_PORT = 8080
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s %(levelname)s %(name)s %(message)s'
@@ -107,7 +111,7 @@ class MinitorAlert(Exception):
 class Monitor(object):
     """Primary configuration item for Minitor"""
 
-    def __init__(self, config):
+    def __init__(self, config, counter=None):
         """Accepts a dictionary of configuration items to override defaults"""
         settings = {
             'alerts': ['log'],
@@ -134,9 +138,18 @@ class Monitor(object):
         self.last_success = None
         self.total_failure_count = 0
 
-        self.logger = logging.getLogger(
+        self._counter = counter
+        self._logger = logging.getLogger(
             '{}({})'.format(self.__class__.__name__, self.name)
         )
+
+    def _count_check(self, is_success=True, is_alert=False):
+        if self._counter is not None:
+            self._counter.labels(
+                monitor=self.name,
+                status=('success' if is_success else 'failure'),
+                is_alert=is_alert,
+            ).inc()
 
     def should_check(self):
         """Determines if this Monitor should run it's check command"""
@@ -158,16 +171,24 @@ class Monitor(object):
             shell=isinstance(self.command, str),
         )
         output = maybe_decode(output)
-        self.logger.debug(output)
+        self._logger.debug(output)
         self.last_check = datetime.now()
         self.last_output = output
 
-        if ex is None:
-            self.success()
-            return True
-        else:
-            self.failure()
-            return False
+        is_success = None
+        try:
+            if ex is None:
+                is_success = True
+                self.success()
+            else:
+                is_success = False
+                self.failure()
+        except MinitorAlert:
+            self._count_check(is_success=is_success, is_alert=True)
+            raise
+
+        self._count_check(is_success=is_success)
+        return is_success
 
     def success(self):
         """Handles success tasks"""
@@ -212,16 +233,25 @@ class Monitor(object):
 
 
 class Alert(object):
-    def __init__(self, name, config):
+    def __init__(self, name, config, counter=None):
         """An alert must be named and have a config dict"""
         self.name = name
         self.command = config.get('command')
         if not self.command:
             raise InvalidAlertException('Invalid alert {}'.format(self.name))
 
-        self.logger = logging.getLogger(
+        self._counter = counter
+        self._logger = logging.getLogger(
             '{}({})'.format(self.__class__.__name__, self.name)
         )
+
+    def _count_alert(self, monitor):
+        """Increments the alert counter"""
+        if self._counter is not None:
+            self._counter.labels(
+                alert=self.name,
+                monitor=monitor,
+            ).inc()
 
     def _formated_command(self, **kwargs):
         """Formats command array or string with kwargs from Monitor"""
@@ -240,6 +270,7 @@ class Alert(object):
 
     def alert(self, message, monitor):
         """Calls the alert command for the provided monitor"""
+        self._count_alert(monitor.name)
         output, ex = call_output(
             self._formated_command(
                 alert_count=monitor.alert_count,
@@ -251,7 +282,7 @@ class Alert(object):
             ),
             shell=isinstance(self.command, str),
         )
-        self.logger.error(maybe_decode(output))
+        self._logger.error(maybe_decode(output))
         if ex is not None:
             raise ex
 
@@ -263,26 +294,57 @@ class Minitor(object):
     check_interval = None
 
     def __init__(self):
-        self.logger = logging.getLogger(self.__class__.__name__)
+        self._logger = logging.getLogger(self.__class__.__name__)
+        self._alert_counter = None
+        self._monitor_counter = None
+        self._monitor_status_gauge = None
 
-    def setup(self, config_path):
+    def _parse_args(self):
+        """Parses command line arguments and returns them"""
+        parser = ArgumentParser(description='Minimal monitoring')
+        parser.add_argument(
+            '--config', '-c',
+            dest='config_path',
+            default='config.yml',
+            help='Path to the config YAML file to use',
+        )
+        parser.add_argument(
+            '--metrics', '-m',
+            dest='metrics',
+            action='store_true',
+            help='Start webserver with metrics',
+        )
+        parser.add_argument(
+            '--metrics-port', '-p',
+            dest='metrics_port',
+            type=int,
+            default=DEFAULT_METRICS_PORT,
+            help='Port to use when serving metrics',
+        )
+        return parser.parse_args()
+
+    def _setup(self, config_path):
         """Load all setup from YAML file at provided path"""
         config = read_yaml(config_path)
         self.check_interval = config.get('check_interval', 30)
-        self.monitors = [Monitor(mon) for mon in config.get('monitors', [])]
+        self.monitors = [
+            Monitor(mon, counter=self._monitor_counter)
+            for mon in config.get('monitors', [])
+        ]
         # Add default alert for logging
         self.alerts = {
             'log': Alert(
                 'log',
-                {'command': ['echo', '{alert_message}!']}
+                {'command': ['echo', '{alert_message}!']},
+                counter=self._alert_counter,
             )
         }
         self.alerts.update({
-            alert_name: Alert(alert_name, alert)
+            alert_name: Alert(alert_name, alert, counter=self._alert_counter)
             for alert_name, alert in config.get('alerts', {}).items()
         })
 
-    def validate_monitors(self):
+    def _validate_monitors(self):
         """Validates monitors are valid against other config values"""
         for monitor in self.monitors:
             # Validate that the interval is valid
@@ -301,45 +363,65 @@ class Minitor(object):
                         )
                     )
 
-    def handle_minitor_alert(self, minitor_alert):
+    def _init_metrics(self):
+        self._alert_counter = Counter(
+            'minitor_alert_total',
+            'Number of Minitor alerts',
+            ['alert', 'monitor'],
+        )
+        self._monitor_counter = Counter(
+            'minitor_check_total',
+            'Number of Minitor checks',
+            ['monitor', 'status', 'is_alert'],
+        )
+        self._monitor_status_gauge = Gauge(
+            'minitor_monitor_up_count',
+            'Currently responsive monitors',
+            ['monitor'],
+        )
+
+    def _loop(self):
+        """The main run loop"""
+        while True:
+            for monitor in self.monitors:
+                try:
+                    result = monitor.check()
+                    if result is not None:
+                        self._logger.info(
+                            '%s: %s',
+                            monitor.name,
+                            'SUCCESS' if result else 'FAILURE'
+                        )
+                except MinitorAlert as minitor_alert:
+                    self._logger.warning(minitor_alert)
+                    self._handle_minitor_alert(minitor_alert)
+
+                # Track the status of the Monitor
+                if self._monitor_status_gauge:
+                    self._monitor_status_gauge.labels(
+                        monitor=monitor.name,
+                    ).set(int(monitor.is_up()))
+
+            sleep(self.check_interval)
+
+    def _handle_minitor_alert(self, minitor_alert):
         """Issues all alerts for a provided monitor"""
         monitor = minitor_alert.monitor
         alerts = monitor.alert_up if monitor.is_up() else monitor.alert_down
         for alert in alerts:
             self.alerts[alert].alert(str(minitor_alert), monitor)
 
-    def parse_args(self):
-        """Parses command line arguments and returns them"""
-        parser = ArgumentParser(description='Minimal monitoring')
-        parser.add_argument(
-            '--config', '-c',
-            dest='config_path',
-            default='config.yml',
-            help='Path to the config YAML file to use',
-        )
-        return parser.parse_args()
-
     def run(self):
         """Runs Minitor in a loop"""
-        args = self.parse_args()
-        self.setup(args.config_path)
-        self.validate_monitors()
+        args = self._parse_args()
+        self._setup(args.config_path)
+        self._validate_monitors()
 
-        while True:
-            for monitor in self.monitors:
-                try:
-                    result = monitor.check()
-                    if result is not None:
-                        self.logger.info(
-                            '%s: %s',
-                            monitor.name,
-                            'SUCCESS' if result else 'FAILURE'
-                        )
-                except MinitorAlert as minitor_alert:
-                    self.logger.warning(minitor_alert)
-                    self.handle_minitor_alert(minitor_alert)
+        if args.metrics:
+            self._init_metrics()
+            start_http_server(args.metrics_port)
 
-            sleep(self.check_interval)
+        self._loop()
 
 
 def main():

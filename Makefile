@@ -14,6 +14,11 @@ env:
 run: env
 	./env/bin/python -m minitor.main
 
+# Runs Minitor with metrics
+.PHONY: run-metrics
+run-metrics: env
+	./env/bin/python -m minitor.main --metrics
+
 # Generates a smaller env for running tox, which builds it's own env
 .PHONY: test-env
 test-env:

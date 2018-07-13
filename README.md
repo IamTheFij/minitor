@@ -53,6 +53,20 @@ In this repo, you can explore the `sample-config.yml` file for an example, but t
 |`{last_success}`|The ISO datetime of the last successful check|
 |`{monitor_name}`|The name of the monitor that failed and triggered the alert|
 
+### Metrics
+
+As of v0.3.0, Minitor supports exporting metrics for [Prometheus](https://prometheus.io/). Prometheus is an open source tool for reading and querying metrics from different sources. Combined with another tool, [Grafana](https://grafana.com/), it allows building of charts and dashboards. You could also opt to just use Minitor to log check results, and instead do your alerting with Grafana.
+
+It is also possible to use the metrics endpoint for monitoring Minitor itself! This allows setting up multiple instances of Minitor on different servers and have them monitor each-other so that you can detect a minitor outage.
+
+To run minitor with metrics, use the `--metrics` (or `-m`) flag. The metrics will be served on port `8080` by default, though it can be overriden using `--metrics-port` (or `-p`)
+
+```
+minitor --metrics
+# or
+minitor --metrics --metrics-port 3000
+```
+
 ## Contributing
 
 Whether you're looking to submit a patch or just tell me I broke something, you can contribute through the Github mirror and I can merge PRs back to the source repository.
