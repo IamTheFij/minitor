@@ -299,7 +299,7 @@ class Minitor(object):
         self._monitor_counter = None
         self._monitor_status_gauge = None
 
-    def _parse_args(self):
+    def _parse_args(self, args=None):
         """Parses command line arguments and returns them"""
         parser = ArgumentParser(description='Minimal monitoring')
         parser.add_argument(
@@ -321,7 +321,7 @@ class Minitor(object):
             default=DEFAULT_METRICS_PORT,
             help='Port to use when serving metrics',
         )
-        return parser.parse_args()
+        return parser.parse_args(args)
 
     def _setup(self, config_path):
         """Load all setup from YAML file at provided path"""
@@ -381,28 +381,30 @@ class Minitor(object):
         )
 
     def _loop(self):
-        """The main run loop"""
         while True:
-            for monitor in self.monitors:
-                try:
-                    result = monitor.check()
-                    if result is not None:
-                        self._logger.info(
-                            '%s: %s',
-                            monitor.name,
-                            'SUCCESS' if result else 'FAILURE'
-                        )
-                except MinitorAlert as minitor_alert:
-                    self._logger.warning(minitor_alert)
-                    self._handle_minitor_alert(minitor_alert)
-
-                # Track the status of the Monitor
-                if self._monitor_status_gauge:
-                    self._monitor_status_gauge.labels(
-                        monitor=monitor.name,
-                    ).set(int(monitor.is_up()))
-
+            self._check()
             sleep(self.check_interval)
+
+    def _check(self):
+        """The main run loop"""
+        for monitor in self.monitors:
+            try:
+                result = monitor.check()
+                if result is not None:
+                    self._logger.info(
+                        '%s: %s',
+                        monitor.name,
+                        'SUCCESS' if result else 'FAILURE'
+                    )
+            except MinitorAlert as minitor_alert:
+                self._logger.warning(minitor_alert)
+                self._handle_minitor_alert(minitor_alert)
+
+            # Track the status of the Monitor
+            if self._monitor_status_gauge:
+                self._monitor_status_gauge.labels(
+                    monitor=monitor.name,
+                ).set(int(monitor.is_up()))
 
     def _handle_minitor_alert(self, minitor_alert):
         """Issues all alerts for a provided monitor"""
@@ -411,9 +413,9 @@ class Minitor(object):
         for alert in alerts:
             self.alerts[alert].alert(str(minitor_alert), monitor)
 
-    def run(self):
+    def run(self, args=None):
         """Runs Minitor in a loop"""
-        args = self._parse_args()
+        args = self._parse_args(args)
         self._setup(args.config_path)
         self._validate_monitors()
 
@@ -424,9 +426,9 @@ class Minitor(object):
         self._loop()
 
 
-def main():
+def main(args=None):
     try:
-        Minitor().run()
+        Minitor().run(args)
     except KeyboardInterrupt:
         pass
     return 0
