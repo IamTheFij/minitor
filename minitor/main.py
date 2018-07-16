@@ -336,7 +336,7 @@ class Minitor(object):
                             'SUCCESS' if result else 'FAILURE'
                         )
                 except MinitorAlert as minitor_alert:
-                    self.logger.warn(minitor_alert)
+                    self.logger.warning(minitor_alert)
                     self.handle_minitor_alert(minitor_alert)
 
             sleep(self.check_interval)
