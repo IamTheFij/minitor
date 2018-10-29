@@ -416,12 +416,13 @@ class Minitor(object):
     def run(self, args=None):
         """Runs Minitor in a loop"""
         args = self._parse_args(args)
-        self._setup(args.config_path)
-        self._validate_monitors()
 
         if args.metrics:
             self._init_metrics()
             start_http_server(args.metrics_port)
+
+        self._setup(args.config_path)
+        self._validate_monitors()
 
         self._loop()
 
