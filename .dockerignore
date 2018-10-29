@@ -4,3 +4,4 @@
 *.py[cod]
 *.so
 **/__pycache__/
+scripts/README.md

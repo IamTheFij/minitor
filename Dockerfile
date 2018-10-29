@@ -8,9 +8,13 @@ WORKDIR /app
 # Expose default metrics port
 EXPOSE 8080
 
+# Copy Python package to container
 COPY ./README.md /app/
 COPY ./setup.py /app/
 COPY ./minitor /app/minitor
 RUN pip install -e .
+
+# Copy scripts
+COPY ./scripts /app/scripts
 
 ENTRYPOINT [ "python3", "-m", "minitor.main" ]

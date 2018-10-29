@@ -36,7 +36,12 @@ setup(
         'Programming Language :: Python :: 3.6',
     ],
     keywords='minitor monitoring alerting',
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=[
+        'contrib',
+        'docs',
+        'tests',
+        'scripts',
+    ]),
     install_requires=[
         'prometheus_client',
         'yamlenv',
