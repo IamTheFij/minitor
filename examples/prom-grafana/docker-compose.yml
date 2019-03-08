@@ -1,0 +1,33 @@
+version: '2'
+services:
+  prom:
+    image: prom/prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "8000:3000"
+    volumes:
+      - /var/lib/grafana
+
+  cadvisor:
+    image: google/cadvisor
+    ports:
+      - "8088:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+
+  minitor:
+    build: ../../
+    ports:
+      - "8080:8080"
+    command: [ "--metrics", "-v" ]
+    volumes:
+      - ../../config.yml:/app/config.yml

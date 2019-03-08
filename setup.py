@@ -39,8 +39,9 @@ setup(
     packages=find_packages(exclude=[
         'contrib',
         'docs',
-        'tests',
+        'examples',
         'scripts',
+        'tests',
     ]),
     install_requires=[
         'prometheus_client',

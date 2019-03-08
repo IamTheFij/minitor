@@ -1,0 +1,16 @@
+---
+global:
+  scrape_interval: 30s
+
+scrape_configs:
+  - job_name: prometheus
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: cadvisor
+    static_configs:
+      - targets: ['cadvisor:8080']
+  - job_name: minitor
+    metrics_path: /
+    static_configs:
+      - targets: ['minitor:8080']
