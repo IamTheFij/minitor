@@ -23,7 +23,7 @@ alerts:
       -u "api:${MAILGUN_API_KEY}"
   sms_down:
     command: >
-      curl -s -X POST -F "Body=Failure: {monitor_name} has failed"
+      curl -s -X POST -F "Body=Failure! {monitor_name} has failed"
       -F "From=${AVAILABLE_NUMBER}" -F "To=${MY_PHONE}"
       "https://api.twilio.com/2010-04-01/Accounts/${ACCOUNT_SID}/Messages"
       -u "${ACCOUNT_SID}:${AUTH_TOKEN}"
