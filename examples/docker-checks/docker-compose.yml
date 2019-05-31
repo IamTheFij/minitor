@@ -1,0 +1,17 @@
+version: '2'
+services:
+  minitor:
+    build: .
+    volumes:
+      - ./config.yml:/app/config.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  failure:
+    container_name: failure
+    image: busybox
+    command: "sh -c 'exit 1'"
+
+  success:
+    container_name: success
+    image: busybox
+    command: "sh -c 'exit 0'"
