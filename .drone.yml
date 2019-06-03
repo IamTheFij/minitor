@@ -10,17 +10,34 @@ steps:
     image: python:3
     commands:
       - make test-env test
-  - name: push to pypi
-    image: python:3
-    commands:
-      - make build-env upload
-    environment:
-      TWINE_USERNAME:
-        from_secret: PYPI_USERNAME
-      TWINE_PASSWORD:
-        from_secret: PYPI_PASSWORD
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
     when:
-      event: [ tag ]
+      status: [ changed, failure ]
+
+---
+kind: pipeline
+name: python-3.4
+
+workspace:
+  base: /app
+  path: .
+
+steps:
+  - name: test
+    image: python:3.4
+    commands:
+      - make test-env test
+
   - name: notify
     image: drillster/drone-email
     settings:
@@ -42,12 +59,24 @@ workspace:
   base: /app
   path: .
 
-
 steps:
   - name: test
     image: python:3.6
     commands:
       - make test-env test
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
+    when:
+      status: [ changed, failure ]
 
 ---
 kind: pipeline
@@ -57,9 +86,75 @@ workspace:
   base: /app
   path: .
 
-
 steps:
   - name: test
     image: python:3.7
     commands:
       - make test-env test
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
+    when:
+      status: [ changed, failure ]
+
+---
+kind: pipeline
+name: deploy
+
+depends_on:
+  - python-latest
+  - python-3.6
+  - python-3.7
+
+workspace:
+  base: /app
+  path: .
+
+steps:
+
+  - name: push to docker hub
+    image: plugins/docker
+    settings:
+      repo: iamthefij/minitor
+      auto_tag: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+    when:
+      branch:
+        - master
+      event:
+        - push
+        - tag
+
+  - name: push to pypi
+    image: python:3
+    commands:
+      - make build-env upload
+    environment:
+      TWINE_USERNAME:
+        from_secret: PYPI_USERNAME
+      TWINE_PASSWORD:
+        from_secret: PYPI_PASSWORD
+    when:
+      event: [ tag ]
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
