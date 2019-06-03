@@ -1,11 +1,10 @@
-language: generic
-before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -qq python3.4 python3-pip python3.4-venv
+dist: xenial
+language: python
+python:
+  - "3.4"
+  - "3.6"
+  - "3.7"
 install:
-  - python3 -m venv env
-  # travis had an issue...
-  - ./env/bin/pip install -U setuptools
-  - make test-env
+  - pip install tox
 script:
-  - make test
+  - tox

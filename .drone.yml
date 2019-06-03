@@ -1,13 +1,17 @@
+---
+kind: pipeline
+name: python-latest
+
 workspace:
   base: /app
   path: .
 
-pipeline:
-  test:
+steps:
+  - name: test
     image: python:3
     commands:
       - make test-env test
-  push_to_pypi:
+  - name: push to pypi
     image: python:3
     commands:
       - make build-env upload
@@ -18,7 +22,7 @@ pipeline:
         target: TWINE_PASSWORD
     when:
       event: tag
-  notify:
+  - name: notify
     image: drillster/drone-email
     host: $SMTP_HOST
     username: $SMTP_USER
@@ -26,3 +30,33 @@ pipeline:
     from: drone@iamthefij.com
     when:
       status: [ changed, failure ]
+
+---
+kind: pipeline
+name: python-3.6
+
+workspace:
+  base: /app
+  path: .
+
+
+steps:
+  - name: test
+    image: python:3.6
+    commands:
+      - make test-env test
+
+---
+kind: pipeline
+name: python-3.7
+
+workspace:
+  base: /app
+  path: .
+
+
+steps:
+  - name: test
+    image: python:3.7
+    commands:
+      - make test-env test

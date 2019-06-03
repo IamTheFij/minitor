@@ -25,7 +25,7 @@ class TestMinitor(object):
             'AVAILABLE_NUMBER': '555-555-5050',
             'MY_PHONE': '555-555-0505',
             'ACCOUNT_SID': 'test-account-id',
-            'ACCOUNT_TOKEN': 'test-account-token',
+            'AUTH_TOKEN': 'test-account-token',
         })
         args = '--config ./sample-config.yml'.split(' ')
         minitor = Minitor()
