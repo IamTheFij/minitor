@@ -15,6 +15,7 @@ setup(
     version='1.0.0',
     description='A minimal monitoring tool',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://git.iamthefij.com/iamthefij/minitor',
     download_url=(
         'https://git.iamthefij.com/iamthefij/minitor/archive/master.tar.gz'
