@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='minitor',
-    version='0.3.1',
+    version='1.0.0',
     description='A minimal monitoring tool',
     long_description=long_description,
     url='https://git.iamthefij.com/iamthefij/minitor',
@@ -22,10 +22,7 @@ setup(
     author='Ian Fijolek',
     author_email='ian@iamthefij.com',
     classifiers=[
-        # How mature is this project? Common values are
-        #   4 - Beta
-        #   5 - Production/Stable
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'Topic :: System :: Monitoring',
@@ -34,6 +31,7 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ],
     keywords='minitor monitoring alerting',
     packages=find_packages(exclude=[
