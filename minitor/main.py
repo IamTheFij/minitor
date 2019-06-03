@@ -16,7 +16,7 @@ from prometheus_client import start_http_server
 
 DEFAULT_METRICS_PORT = 8080
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.ERROR,
     format='%(asctime)s %(levelname)s %(name)s %(message)s'
 )
 logging.getLogger(__name__).addHandler(logging.NullHandler())
@@ -111,7 +111,7 @@ class MinitorAlert(Exception):
 class Monitor(object):
     """Primary configuration item for Minitor"""
 
-    def __init__(self, config, counter=None):
+    def __init__(self, config, counter=None, logger=None):
         """Accepts a dictionary of configuration items to override defaults"""
         settings = {
             'alerts': ['log'],
@@ -139,9 +139,14 @@ class Monitor(object):
         self.total_failure_count = 0
 
         self._counter = counter
-        self._logger = logging.getLogger(
-            '{}({})'.format(self.__class__.__name__, self.name)
-        )
+        if logger is None:
+            self._logger = logging.getLogger(
+                '{}({})'.format(self.__class__.__name__, self.name)
+            )
+        else:
+            self._logger = logger.getChild(
+                '{}({})'.format(self.__class__.__name__, self.name)
+            )
 
     def _count_check(self, is_success=True, is_alert=False):
         if self._counter is not None:
@@ -233,7 +238,7 @@ class Monitor(object):
 
 
 class Alert(object):
-    def __init__(self, name, config, counter=None):
+    def __init__(self, name, config, counter=None, logger=None):
         """An alert must be named and have a config dict"""
         self.name = name
         self.command = config.get('command')
@@ -241,9 +246,14 @@ class Alert(object):
             raise InvalidAlertException('Invalid alert {}'.format(self.name))
 
         self._counter = counter
-        self._logger = logging.getLogger(
-            '{}({})'.format(self.__class__.__name__, self.name)
-        )
+        if logger is None:
+            self._logger = logging.getLogger(
+                '{}({})'.format(self.__class__.__name__, self.name)
+            )
+        else:
+            self._logger = logger.getChild(
+                '{}({})'.format(self.__class__.__name__, self.name)
+            )
 
     def _count_alert(self, monitor):
         """Increments the alert counter"""
@@ -321,6 +331,12 @@ class Minitor(object):
             default=DEFAULT_METRICS_PORT,
             help='Port to use when serving metrics',
         )
+        parser.add_argument(
+            '--verbose', '-v',
+            action='count',
+            help=('Adjust log verbosity by increasing arg count. Default log',
+                  'level is ERROR. Level increases with each `v`'),
+        )
         return parser.parse_args(args)
 
     def _setup(self, config_path):
@@ -328,7 +344,11 @@ class Minitor(object):
         config = read_yaml(config_path)
         self.check_interval = config.get('check_interval', 30)
         self.monitors = [
-            Monitor(mon, counter=self._monitor_counter)
+            Monitor(
+                mon,
+                counter=self._monitor_counter,
+                logger=self._logger,
+            )
             for mon in config.get('monitors', [])
         ]
         # Add default alert for logging
@@ -337,10 +357,16 @@ class Minitor(object):
                 'log',
                 {'command': ['echo', '{alert_message}!']},
                 counter=self._alert_counter,
+                logger=self._logger,
             )
         }
         self.alerts.update({
-            alert_name: Alert(alert_name, alert, counter=self._alert_counter)
+            alert_name: Alert(
+                alert_name,
+                alert,
+                counter=self._alert_counter,
+                logger=self._logger,
+            )
             for alert_name, alert in config.get('alerts', {}).items()
         })
 
@@ -413,9 +439,21 @@ class Minitor(object):
         for alert in alerts:
             self.alerts[alert].alert(str(minitor_alert), monitor)
 
+    def _set_log_level(self, verbose):
+        """Sets the log level for the class using the provided verbose count"""
+        if verbose == 1:
+            self._logger.setLevel(logging.WARNING)
+        elif verbose == 2:
+            self._logger.setLevel(logging.INFO)
+        elif verbose >= 3:
+            self._logger.setLevel(logging.DEBUG)
+
     def run(self, args=None):
         """Runs Minitor in a loop"""
         args = self._parse_args(args)
+
+        if args.verbose:
+            self._set_log_level(args.verbose)
 
         if args.metrics:
             self._init_metrics()

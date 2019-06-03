@@ -12,7 +12,7 @@ env:
 # Runs Minitor
 .PHONY: run
 run: env
-	./env/bin/python -m minitor.main
+	./env/bin/python -m minitor.main -vvv
 
 # Runs Minitor with metrics
 .PHONY: run-metrics
