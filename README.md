@@ -40,9 +40,45 @@ The Docker image uses a default `config.yml` that is copied from `sample-config.
 
 `docker run -v $PWD/config.yml:/app/config.yml iamthefij/minitor`
 
-### Configuring
+## Configuring
 
-In this repo, you can explore the `sample-config.yml` file for an example, but the general structure is as follows. It should be noted that environment variable interpolation happens on load of the YAML file. Also, when alerts are executed, they will be passed through Python's format function with arguments for some attributes of the Monitor. The following monitor specific variables can be referenced using Python formatting syntax:
+In this repo, you can explore the `sample-config.yml` file for an example, but the general structure is as follows. It should be noted that environment variable interpolation happens on load of the YAML file.
+
+The global configurations are:
+
+|key|value|
+|---|---|
+|`check_interval`|Maximum frequency to run checks for each monitor|
+|`monitors`|List of all monitors. Detailed description below|
+|`alerts`|List of all alerts. Detailed description below|
+
+### Monitors
+
+All monitors should be listed under `monitors`.
+
+Each monitor allows the following configuration:
+
+|key|value|
+|---|---|
+|`name`|Name of the monitor running. This will show up in messages and logs.|
+|`command`|Specifies the command that should be executed, either in exec or shell form. This command's exit value will determine whether the check is successful|
+|`alert_down`|A list of Alerts to be triggered when the monitor is in a "down" state|
+|`alert_up`|A list of Alerts to be triggered when the monitor moves to an "up" state|
+|`check_interval`|The interval at which this monitor should be checked. This must be greater than the global `check_interval` value|
+|`alert_after`|Allows specifying the number of failed checks before an alert should be triggered|
+|`alert_every`|Allows specifying how often an alert should be retriggered. There are a few magic numbers here. Defaults to `-1` for an exponential backoff. Setting to `0` disables re-alerting. Positive values will allow retriggering after the specified number of checks|
+
+### Alerts
+
+Alerts exist as objects keyed under `alerts`. Their key should be the name of the Alert. This is used in your monitor setup in `alert_down` and `alert_up`.
+
+Eachy alert allows the following configuration:
+
+|key|value|
+|---|---|
+|`command`|Specifies the command that should be executed, either in exec or shell form. This is the command that will be run when the alert is executed. This can be templated with environment variables or the variables shown in the table below|
+
+Also, when alerts are executed, they will be passed through Python's format function with arguments for some attributes of the Monitor. The following monitor specific variables can be referenced using Python formatting syntax:
 
 |token|value|
 |---|---|
