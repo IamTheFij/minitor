@@ -14,19 +14,23 @@ steps:
     image: python:3
     commands:
       - make build-env upload
-    secrets:
-      - source: PYPI_USERNAME
-        target: TWINE_USERNAME
-      - source: PYPI_PASSWORD
-        target: TWINE_PASSWORD
+    environment:
+      TWINE_USERNAME:
+        from_secret: PYPI_USERNAME
+      TWINE_USERNAME:
+        from_secret: PYPI_PASSWORD
     when:
       event: [ tag ]
   - name: notify
     image: drillster/drone-email
-    host: $SMTP_HOST
-    username: $SMTP_USER
-    password: $SMTP_PASS
-    from: drone@iamthefij.com
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
     when:
       status: [ changed, failure ]
 
