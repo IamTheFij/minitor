@@ -17,7 +17,7 @@ steps:
     environment:
       TWINE_USERNAME:
         from_secret: PYPI_USERNAME
-      TWINE_USERNAME:
+      TWINE_PASSWORD:
         from_secret: PYPI_PASSWORD
     when:
       event: [ tag ]
