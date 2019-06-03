@@ -61,7 +61,6 @@ def validate_monitor_settings(settings):
     non_zero = (
         'check_interval',
         'alert_after',
-        'alert_every',
     )
 
     for key in non_zero:
@@ -220,6 +219,9 @@ class Monitor(object):
         if self.alert_every > 0:
             # Otherwise, we should check against our alert_every
             should_alert = (failure_count % self.alert_every) == 0
+        elif self.alert_every == 0:
+            # Only alert on the first failure
+            should_alert = failure_count == 1
         else:
             should_alert = (failure_count >= (2 ** self.alert_count) - 1)
 

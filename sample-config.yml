@@ -5,9 +5,9 @@ monitors:
     command: [ 'curl', '-s', '-o', '/dev/null', 'https://minitor.mon' ]
     alert_down: [ log, mailgun_down, sms_down ]
     alert_up: [ log, email_up ]
-    check_interval: 30
+    check_interval: 30 # Must be at minimum the global `check_interval`
     alert_after: 3
-    alert_every: -1 # Defaults to -1 for exponential backoff
+    alert_every: -1 # Defaults to -1 for exponential backoff. 0 to disable repeating
 
 alerts:
   email_up:
