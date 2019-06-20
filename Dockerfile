@@ -1,6 +1,11 @@
-FROM python:3
+ARG REPO=library
+FROM ${REPO}/python:3-alpine
 LABEL maintainer="ian@iamthefij.com"
 # Minitor: https://git.iamthefij.com/iamthefij/minitor
+
+# This should be the target qemu arch
+ARG ARCH=x86_64
+COPY ./build/qemu-${ARCH}-static /usr/bin/
 
 COPY ./sample-config.yml /app/config.yml
 WORKDIR /app

@@ -1,5 +1,5 @@
 kind: pipeline
-name: python-latest
+name: test-python-latest
 
 workspace:
   base: /app
@@ -9,6 +9,7 @@ steps:
   - name: test
     image: python:3
     commands:
+      - python -V
       - make test-env test
 
   - name: notify
@@ -26,7 +27,7 @@ steps:
 
 ---
 kind: pipeline
-name: python-3.4
+name: test-python3.4
 
 workspace:
   base: /app
@@ -36,6 +37,7 @@ steps:
   - name: test
     image: python:3.4
     commands:
+      - python -V
       - make test-env test
 
   - name: notify
@@ -53,7 +55,7 @@ steps:
 
 ---
 kind: pipeline
-name: python-3.6
+name: test-python3.6
 
 workspace:
   base: /app
@@ -63,6 +65,7 @@ steps:
   - name: test
     image: python:3.6
     commands:
+      - python -V
       - make test-env test
 
   - name: notify
@@ -80,7 +83,7 @@ steps:
 
 ---
 kind: pipeline
-name: python-3.7
+name: test-python3.7
 
 workspace:
   base: /app
@@ -90,6 +93,7 @@ steps:
   - name: test
     image: python:3.7
     commands:
+      - python -V
       - make test-env test
 
   - name: notify
@@ -105,14 +109,64 @@ steps:
     when:
       status: [ changed, failure ]
 
+# ---
+# kind: pipeline
+# name: test-pypy3.6
+#
+# workspace:
+#   base: /app
+#   path: .
+#
+# steps:
+#   - name: test
+#     image: pypy:3.6
+#     commands:
+#       - python -V
+#       # python -m env doesn't exist for pypy
+#       - pip install virtualenv
+#       - virtualenv env
+#       - ./env/bin/pip install tox
+#       - make test
+#
+#   - name: notify
+#     image: drillster/drone-email
+#     settings:
+#       host:
+#         from_secret: SMTP_HOST
+#       username:
+#         from_secret: SMTP_USER
+#       password:
+#         from_secret: SMTP_PASS
+#       from: drone@iamthefij.com
+#     when:
+#       status: [ changed, failure ]
+
 ---
 kind: pipeline
-name: deploy
+name: tests
 
 depends_on:
-  - python-latest
-  - python-3.6
-  - python-3.7
+  - test-python-latest
+  - test-python3.4
+  - test-python3.6
+  - test-python3.7
+  # - test-pypy3.6
+
+steps: []
+
+---
+kind: pipeline
+name: deploy-pypi
+
+trigger:
+  event:
+    - tag
+  ref:
+    - refs/heads/master
+    - refs/tags/v*
+
+depends_on:
+  - tests
 
 workspace:
   base: /app
@@ -120,21 +174,15 @@ workspace:
 
 steps:
 
-  - name: push to docker hub
-    image: plugins/docker
-    settings:
-      repo: iamthefij/minitor
-      auto_tag: true
-      username:
-        from_secret: docker_username
-      password:
-        from_secret: docker_password
-    when:
-      branch:
-        - master
-      event:
-        - push
-        - tag
+  - name: push to test pypi
+    image: python:3
+    commands:
+      - make build-env upload-test
+    environment:
+      TWINE_USERNAME:
+        from_secret: PYPI_USERNAME
+      TWINE_PASSWORD:
+        from_secret: TEST_PYPI_PASSWORD
 
   - name: push to pypi
     image: python:3
@@ -158,3 +206,134 @@ steps:
       password:
         from_secret: SMTP_PASS
       from: drone@iamthefij.com
+
+---
+kind: pipeline
+name: deploy-docker-amd64
+
+depends_on:
+  - tests
+
+trigger:
+  event:
+    - push
+    - tag
+  ref:
+    - refs/heads/master
+    - refs/tags/v*
+
+steps:
+  - name: get qemu
+    image: busybox
+    commands:
+      - sh ./get_qemu.sh x86_64
+
+  - name: build
+    image: plugins/docker
+    settings:
+      repo: iamthefij/minitor
+      auto_tag: true
+      auto_tag_suffix: linux-amd64
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+
+---
+kind: pipeline
+name: deploy-docker-arm
+
+depends_on:
+  - tests
+
+trigger:
+  event:
+    - push
+    - tag
+  ref:
+    - refs/heads/master
+    - refs/tags/v*
+
+steps:
+  - name: get qemu
+    image: busybox
+    commands:
+      - sh ./get_qemu.sh arm
+
+  - name: build
+    image: plugins/docker
+    settings:
+      repo: iamthefij/minitor
+      auto_tag: true
+      auto_tag_suffix: linux-arm
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      build_args:
+        - ARCH=arm
+        - REPO=arm32v6
+
+---
+kind: pipeline
+name: deploy-docker-arm64
+
+depends_on:
+  - tests
+
+trigger:
+  event:
+    - push
+    - tag
+  ref:
+    - refs/heads/master
+    - refs/tags/v*
+
+steps:
+  - name: get qemu
+    image: busybox
+    commands:
+      - sh ./get_qemu.sh aarch64
+
+  - name: build
+    image: plugins/docker
+    settings:
+      repo: iamthefij/minitor
+      auto_tag: true
+      auto_tag_suffix: linux-arm64
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      build_args:
+        - ARCH=aarch64
+        - REPO=arm64v8
+
+---
+kind: pipeline
+name: deploy-docker-manifest
+
+depends_on:
+  - deploy-docker-amd64
+  - deploy-docker-arm
+  - deploy-docker-arm64
+
+trigger:
+  event:
+    - push
+    - tag
+  ref:
+    - refs/heads/master
+    - refs/tags/v*
+
+steps:
+  - name: publish manifest
+    image: plugins/manifest
+    settings:
+      spec: manifest.tmpl
+      auto_tag: true
+      ignore_missing: true
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
