@@ -5,6 +5,7 @@ import pytest
 
 from minitor.main import Alert
 from minitor.main import Monitor
+from tests.util import assert_called_once_with
 
 
 class TestAlert(object):
@@ -52,9 +53,10 @@ class TestAlert(object):
         monitor.total_failure_count = 1
         with patch.object(echo_alert._logger, 'error') as mock_error:
             echo_alert.alert('Exception message', monitor)
-        mock_error.assert_called_once_with(
-            'Dummy Monitor has failed 1 time(s)!\n'
-            'We have alerted 1 time(s)\n'
-            'Last success was ' + expected_success + '\n'
-            'Last output was: beep boop'
-        )
+            assert_called_once_with(
+                mock_error,
+                'Dummy Monitor has failed 1 time(s)!\n'
+                'We have alerted 1 time(s)\n'
+                'Last success was ' + expected_success + '\n'
+                'Last output was: beep boop'
+            )

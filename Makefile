@@ -1,46 +1,62 @@
 DOCKER_TAG := minitor-dev
 OPEN_CMD := $(shell type xdg-open &> /dev/null && echo 'xdg-open' || echo 'open')
+ENV := env
 
 .PHONY: default
 default: test
 
-# Builds the python3 venv with all dev requirements
-env:
-	python3 -m venv env
-	./env/bin/pip install -r requirements-dev.txt
+# Creates virtualenv
+$(ENV):
+	python3 -m venv $(ENV)
 
-# Runs Minitor
-.PHONY: run
-run: env
-	./env/bin/python -m minitor.main -vvv
+# Install minitor and dependencies in virtualenv
+$(ENV)/bin/minitor: $(ENV)
+	$(ENV)/bin/pip install -r requirements-dev.txt
 
-# Runs Minitor with metrics
-.PHONY: run-metrics
-run-metrics: env
-	./env/bin/python -m minitor.main --metrics
+# Install tox into virtualenv for running tests
+$(ENV)/bin/tox: $(ENV)
+	$(ENV)/bin/pip install tox
+
+# Install wheel for building packages
+$(ENV)/bin/wheel: $(ENV)
+	$(ENV)/bin/pip install wheel
+
+# Install twine for uploading packages
+$(ENV)/bin/twine: $(ENV)
+	$(ENV)/bin/pip install twine
+
+# Installs dev requirements to virtualenv
+.PHONY: devenv
+devenv: $(ENV)/bin/minitor
 
 # Generates a smaller env for running tox, which builds it's own env
 .PHONY: test-env
-test-env:
-	python3 -m venv env
-	./env/bin/pip install tox
-
-# Runs tests with tox
-.PHONY: test
-test: env
-	./env/bin/tox
+test-env: $(ENV)/bin/tox
 
 # Generates a small build env for building and uploading dists
 .PHONY: build-env
-build-env:
-	python3 -m venv env
-	./env/bin/pip install twine wheel
+build-env: $(ENV)/bin/twine $(ENV)/bin/wheel
+
+# Runs Minitor
+.PHONY: run
+run: $(ENV)/bin/minitor
+	$(ENV)/bin/minitor -vvv
+
+# Runs Minitor with metrics
+.PHONY: run-metrics
+run-metrics: $(ENV)
+	$(ENV)/bin/python -m minitor.main --metrics
+
+# Runs tests with tox
+.PHONY: test
+test: $(ENV)/bin/tox
+	$(ENV)/bin/tox -e py3
 
 # Builds wheel for package to upload
 .PHONY: build
-build: env
-	./env/bin/python setup.py sdist
-	./env/bin/python setup.py bdist_wheel
+build: $(ENV)/bin/wheel
+	$(ENV)/bin/python setup.py sdist
+	$(ENV)/bin/python setup.py bdist_wheel
 
 # Verify that the python version matches the git tag so we don't push bad shas
 .PHONY: verify-tag-version
@@ -50,13 +66,13 @@ verify-tag-version:
 
 # Uses twine to upload to pypi
 .PHONY: upload
-upload: verify-tag-version build
-	./env/bin/twine upload dist/*
+upload: verify-tag-version build $(ENV)/bin/twine
+	$(ENV)/bin/twine upload dist/*
 
 # Uses twine to upload to test pypi
 .PHONY: upload-test
-upload-test: verify-tag-version build
-	./env/bin/twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+upload-test: verify-tag-version build $(ENV)/bin/twine
+	$(ENV)/bin/twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # Cleans all build, runtime, and test artifacts
 .PHONY: clean
@@ -68,20 +84,20 @@ clean:
 # Cleans dist and env
 .PHONY: dist-clean
 dist-clean: clean
-	rm -fr ./dist ./env
+	rm -fr ./dist $(ENV)
 
 # Install pre-commit hooks
 .PHONY: install-hooks
-install-hooks: env
-	./env/bin/tox -e pre-commit -- install -f --install-hooks
+install-hooks: $(ENV)
+	$(ENV)/bin/tox -e pre-commit -- install -f --install-hooks
 
 # Generates test coverage
 .coverage:
-	./env/bin/tox
+	$(ENV)/bin/tox
 
 # Builds coverage html
 htmlcov/index.html: .coverage
-	./env/bin/coverage html
+	$(ENV)/bin/coverage html
 
 # Opens coverage html in browser (on macOS and some Linux systems)
 .PHONY: open-coverage
@@ -115,7 +131,7 @@ docker-cross-build-arm64: build/qemu-aarch64-static
 	docker build --build-arg REPO=arm64v8 --build-arg ARCH=aarch64 . -t ${DOCKER_TAG}-linux-arm64
 
 # Run on host architechture
-.PHONY: run
+.PHONY: docker-run
 docker-run: docker-build
 	docker run ${DOCKER_TAG}-linux-amd64
 

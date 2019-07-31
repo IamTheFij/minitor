@@ -55,6 +55,34 @@ steps:
 
 ---
 kind: pipeline
+name: test-python3.5
+
+workspace:
+  base: /app
+  path: .
+
+steps:
+  - name: test
+    image: python:3.5
+    commands:
+      - python -V
+      - make test-env test
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
+    when:
+      status: [ changed, failure ]
+
+---
+kind: pipeline
 name: test-python3.6
 
 workspace:
@@ -148,6 +176,7 @@ name: tests
 depends_on:
   - test-python-latest
   - test-python3.4
+  - test-python3.5
   - test-python3.6
   - test-python3.7
   # - test-pypy3.6

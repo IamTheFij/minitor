@@ -7,6 +7,7 @@ from minitor.main import InvalidMonitorException
 from minitor.main import MinitorAlert
 from minitor.main import Monitor
 from minitor.main import validate_monitor_settings
+from tests.util import assert_called_once
 
 
 class TestMonitor(object):
@@ -111,14 +112,14 @@ class TestMonitor(object):
         with patch.object(monitor, 'failure') as mock_failure:
             monitor.command = ['ls', '--not-real']
             assert not monitor.check()
-            mock_failure.assert_called_once()
+            assert_called_once(mock_failure)
             assert monitor.last_output is not None
 
     def test_monitor_check_success(self, monitor):
         assert monitor.last_output is None
         with patch.object(monitor, 'success') as mock_success:
             assert monitor.check()
-            mock_success.assert_called_once()
+            assert_called_once(mock_success)
             assert monitor.last_output is not None
 
     @pytest.mark.parametrize('failure_count', [0, 1])

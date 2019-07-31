@@ -19,7 +19,7 @@ repos:
       - id: name-tests-test
         exclude: tests/(common.py|util.py|(helpers|integration/factories)/(.+).py)
   - repo: https://github.com/asottile/reorder_python_imports
-    sha: v1.0.1
+    rev: v1.0.1
     hooks:
     - id: reorder-python-imports
       args:
