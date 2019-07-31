@@ -1,9 +1,18 @@
 dist: xenial
 language: python
-python:
-  - "3.4"
-  - "3.6"
-  - "3.7"
+matrix:
+  include:
+    - python: "3.4"
+      env: TOXENV=py3
+    - python: "3.5"
+      env: TOXENV=py3
+    - python: "3.6"
+      env: TOXENV=py3
+    - python: "3.7"
+      env: TOXENV=py3
+    - python: "pypy3.5"
+      env: TOXENV=pypy3
+
 install:
   - pip install tox
 script:
