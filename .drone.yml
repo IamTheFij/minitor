@@ -1,5 +1,5 @@
 kind: pipeline
-name: test-python-latest
+name: test-python3-latest
 
 workspace:
   base: /app
@@ -36,9 +36,12 @@ workspace:
 steps:
   - name: test
     image: python:3.4
+    environment:
+      TOXENV: py3
     commands:
       - python -V
-      - make test
+      - pip install tox
+      - tox
 
   - name: notify
     image: drillster/drone-email
@@ -64,9 +67,12 @@ workspace:
 steps:
   - name: test
     image: python:3.5
+    environment:
+      TOXENV: py3
     commands:
       - python -V
-      - make test
+      - pip install tox
+      - tox
 
   - name: notify
     image: drillster/drone-email
@@ -92,9 +98,12 @@ workspace:
 steps:
   - name: test
     image: python:3.6
+    environment:
+      TOXENV: py3
     commands:
       - python -V
-      - make test
+      - pip install tox
+      - tox
 
   - name: notify
     image: drillster/drone-email
@@ -120,9 +129,12 @@ workspace:
 steps:
   - name: test
     image: python:3.7
+    environment:
+      TOXENV: py3
     commands:
       - python -V
-      - make test
+      - pip install tox
+      - tox
 
   - name: notify
     image: drillster/drone-email
@@ -137,49 +149,80 @@ steps:
     when:
       status: [ changed, failure ]
 
-# ---
-# kind: pipeline
-# name: test-pypy3.6
-#
-# workspace:
-#   base: /app
-#   path: .
-#
-# steps:
-#   - name: test
-#     image: pypy:3.6
-#     commands:
-#       - python -V
-#       # python -m env doesn't exist for pypy
-#       - pip install virtualenv
-#       - virtualenv env
-#       - ./env/bin/pip install tox
-#       - make test
-#
-#   - name: notify
-#     image: drillster/drone-email
-#     settings:
-#       host:
-#         from_secret: SMTP_HOST
-#       username:
-#         from_secret: SMTP_USER
-#       password:
-#         from_secret: SMTP_PASS
-#       from: drone@iamthefij.com
-#     when:
-#       status: [ changed, failure ]
+---
+kind: pipeline
+name: test-pypy3-latest
+
+workspace:
+  base: /app
+  path: .
+
+steps:
+  - name: test
+    image: pypy:3
+    environment:
+      TOXENV: pypy3
+    commands:
+      - pypy3 -V
+      - pip install tox
+      - tox
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
+    when:
+      status: [ changed, failure ]
+
+---
+kind: pipeline
+name: test-pypy3.6
+
+workspace:
+  base: /app
+  path: .
+
+steps:
+  - name: test
+    image: pypy:3.6
+    environment:
+      TOXENV: pypy3
+    commands:
+      - pypy3 -V
+      - pip install tox
+      - tox
+
+  - name: notify
+    image: drillster/drone-email
+    settings:
+      host:
+        from_secret: SMTP_HOST
+      username:
+        from_secret: SMTP_USER
+      password:
+        from_secret: SMTP_PASS
+      from: drone@iamthefij.com
+    when:
+      status: [ changed, failure ]
 
 ---
 kind: pipeline
 name: tests
 
 depends_on:
-  - test-python-latest
+  - test-python3-latest
   - test-python3.4
   - test-python3.5
   - test-python3.6
   - test-python3.7
-  # - test-pypy3.6
+  - test-pypy3-latest
+  - test-pypy3.6
 
 steps: []
 
