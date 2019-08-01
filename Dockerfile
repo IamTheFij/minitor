@@ -22,4 +22,7 @@ RUN pip install -e .
 # Copy scripts
 COPY ./scripts /app/scripts
 
+# Allow all users to execute minitor and scripts
+RUN chmod -R 755 /app
+
 ENTRYPOINT [ "python3", "-m", "minitor.main" ]

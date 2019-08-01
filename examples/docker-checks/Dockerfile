@@ -1,3 +1,7 @@
-FROM minitor-dev
+FROM minitor-dev-linux-amd64
 
-RUN apt-get update && apt-get install -y jq curl && apt-get clean
+RUN apk add bash jq curl
+
+RUN addgroup -S minitor && adduser -S minitor -G minitor
+
+USER minitor
