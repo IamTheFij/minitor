@@ -1,7 +1,7 @@
 version: '2'
 services:
   minitor:
-    build: .
+    build: ../..
     volumes:
       - ./config.yml:/app/config.yml
       - /var/run/docker.sock:/var/run/docker.sock:ro
