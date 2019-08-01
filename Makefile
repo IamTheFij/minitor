@@ -5,6 +5,10 @@ ENV := env
 .PHONY: default
 default: test
 
+# Create sample config
+config.yml:
+	cp sample-config.yml config.yml
+
 # Creates virtualenv
 $(ENV):
 	python3 -m venv $(ENV)
@@ -39,12 +43,12 @@ build-env: $(ENV)/bin/twine $(ENV)/bin/wheel
 
 # Runs Minitor
 .PHONY: run
-run: $(ENV)/bin/minitor
+run: $(ENV)/bin/minitor config.yml
 	$(ENV)/bin/minitor -vvv
 
 # Runs Minitor with metrics
 .PHONY: run-metrics
-run-metrics: $(ENV)
+run-metrics: $(ENV) config.yml
 	$(ENV)/bin/python -m minitor.main --metrics
 
 # Runs tests with tox
@@ -132,14 +136,14 @@ docker-cross-build-arm64: build/qemu-aarch64-static
 
 # Run on host architechture
 .PHONY: docker-run
-docker-run: docker-build
-	docker run ${DOCKER_TAG}-linux-amd64
+docker-run: docker-build config.yml
+	docker run --rm -v $(shell pwd)/config.yml:/app/config.yml ${DOCKER_TAG}-linux-amd64
 
 # Cross run on host architechture
 .PHONY: docker-cross-run-arm
-docker-cross-run-arm: docker-cross-build-arm
-	docker run --rm ${DOCKER_TAG}-linux-arm
+docker-cross-run-arm: docker-cross-build-arm config.yml
+	docker run --rm -v $(shell pwd)/config.yml:/app/config.yml ${DOCKER_TAG}-linux-arm
 
 .PHONY: docker-cross-run-arm64
-docker-cross-run-arm64: docker-cross-build-arm64
-	docker run --rm ${DOCKER_TAG}-linux-arm64
+docker-cross-run-arm64: docker-cross-build-arm64 config.yml
+	docker run --rm -v $(shell pwd)/config.yml:/app/config.yml ${DOCKER_TAG}-linux-arm64
