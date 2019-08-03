@@ -12,7 +12,7 @@ with open(path.join(here, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='minitor',
-    version='1.0.2',
+    version='1.0.3',
     description='A minimal monitoring tool',
     long_description=long_description,
     long_description_content_type='text/markdown',
