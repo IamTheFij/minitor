@@ -49,10 +49,10 @@ fi
 health=$(inspect_container "$container_id" | jq -r '.State.Health.Status')
 
 case "$health" in
-    "null")
+    null)
         echo "No healthcheck results"
         ;;
-    "starting|healthy")
+    starting|healthy)
         echo "Status: '$health'"
         ;;
     *)
