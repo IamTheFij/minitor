@@ -130,7 +130,7 @@ docker-build: build/qemu-x86_64-static
 docker-cross-build-arm: build/qemu-arm-static
 	docker build --build-arg REPO=arm32v6 --build-arg ARCH=arm . -t ${DOCKER_TAG}-linux-arm
 
-.PHONY: docker-cross-build-arm
+.PHONY: docker-cross-build-arm64
 docker-cross-build-arm64: build/qemu-aarch64-static
 	docker build --build-arg REPO=arm64v8 --build-arg ARCH=aarch64 . -t ${DOCKER_TAG}-linux-arm64
 
