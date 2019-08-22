@@ -16,14 +16,14 @@ I'm running a few small services and found Sensu, Consul, Nagios, etc. to all be
 
 Install and execute with:
 
-```
+```bash
 pip install minitor
 minitor
 ```
 
 If locally developing you can use:
 
-```
+```bash
 make run
 ```
 
@@ -34,11 +34,17 @@ It will read the contents of `config.yml` and begin its loop. You could also run
 
 You can pull this repository directly from Docker:
 
-`docker pull iamthefij/minitor`
+```bash
+docker pull iamthefij/minitor
+```
 
 The Docker image uses a default `config.yml` that is copied from `sample-config.yml`. This won't really do anything for you, so when you run the Docker image, you should supply your own `config.yml` file:
 
-`docker run -v $PWD/config.yml:/app/config.yml iamthefij/minitor`
+```bash
+docker run -v $PWD/config.yml:/app/config.yml iamthefij/minitor
+```
+
+Images are provided for `amd64`, `arm`, and `arm64` architechtures, but the Python package should be compatible with anything that supports Python.
 
 ## Configuring
 
@@ -97,7 +103,7 @@ It is also possible to use the metrics endpoint for monitoring Minitor itself! T
 
 To run minitor with metrics, use the `--metrics` (or `-m`) flag. The metrics will be served on port `8080` by default, though it can be overriden using `--metrics-port` (or `-p`)
 
-```
+```bash
 minitor --metrics
 # or
 minitor --metrics --metrics-port 3000
