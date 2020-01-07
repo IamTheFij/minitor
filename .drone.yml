@@ -27,37 +27,6 @@ steps:
 
 ---
 kind: pipeline
-name: test-python3.4
-
-workspace:
-  base: /app
-  path: .
-
-steps:
-  - name: test
-    image: python:3.4
-    environment:
-      TOXENV: py3
-    commands:
-      - python -V
-      - pip install tox
-      - tox
-
-  - name: notify
-    image: drillster/drone-email
-    settings:
-      host:
-        from_secret: SMTP_HOST
-      username:
-        from_secret: SMTP_USER
-      password:
-        from_secret: SMTP_PASS
-      from: drone@iamthefij.com
-    when:
-      status: [ changed, failure ]
-
----
-kind: pipeline
 name: test-python3.5
 
 workspace:
