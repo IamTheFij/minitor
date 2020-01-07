@@ -48,8 +48,8 @@ run: $(ENV)/bin/minitor config.yml
 
 # Runs Minitor with metrics
 .PHONY: run-metrics
-run-metrics: $(ENV) config.yml
-	$(ENV)/bin/python -m minitor.main --metrics
+run-metrics: $(ENV)/bin/minitor config.yml
+	$(ENV)/bin/minitor -vvv --metrics
 
 # Runs tests with tox
 .PHONY: test
