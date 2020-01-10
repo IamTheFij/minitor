@@ -158,7 +158,7 @@ def push_docker(tag_suffix, arch, repo):
         "kind": "pipeline",
         "name": "deploy-docker-{}".format(tag_suffix),
         "trigger": {
-            "event": ["tag"],
+            "event": ["tag", "push"],
             "ref": [
                 "refs/heads/master",
                 "refs/tags/v*",
