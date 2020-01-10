@@ -184,7 +184,7 @@ def push_to_docker(ctx):
         "depends_on": ["py-tests"],
         "workspace": get_workspace(),
         "trigger": {
-            "event": ["tag"],
+            "event": ["tag", "push"],
             "ref": [
                 "refs/heads/master",
                 "refs/tags/v*",
@@ -212,5 +212,6 @@ def push_to_docker(ctx):
             notify_step(),
         ],
     }]
+
 
 # vim: ft=python
