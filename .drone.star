@@ -25,13 +25,13 @@ def get_workspace():
 # Builds a list of all test pipelines to be executed
 def build_test_pipelines():
     test_pipelines = [
-        test("python:3.5"),
-        test("python:3.6"),
-        test("python:3.7"),
-        test("python:3.8"),
-        test("python:3"),
-        test("pypy:3.6", "pypy3", "pypy3"),
-        test("pypy:3", "pypy3", "pypy3"),
+        test_pipeline("python:3.5"),
+        test_pipeline("python:3.6"),
+        test_pipeline("python:3.7"),
+        test_pipeline("python:3.8"),
+        test_pipeline("python:3"),
+        test_pipeline("pypy:3.6", "pypy3", "pypy3"),
+        test_pipeline("pypy:3", "pypy3", "pypy3"),
     ]
 
     # Converge all tests on a single pipeline "py-tests"
@@ -55,26 +55,31 @@ def wait_for_all_tests(test_pipelines, name="py-tests"):
 
 
 # Builds a single test pipeline
-def test(docker_tag, python_cmd="python", tox_env="py3"):
+def test_pipeline(docker_tag, python_cmd="python", tox_env="py3"):
     return {
         "kind": "pipeline",
         "name": "test {}".format(docker_tag.replace(":", "")),
         "workspace": get_workspace(),
         "steps": [
-            {
-                "name": "test",
-                "image": docker_tag,
-                "environment": {
-                    "TOXENV": tox_env,
-                },
-                "commands": [
-                    "{} -V".format(python_cmd),
-                    "pip install tox",
-                    "tox",
-                ],
-            },
-            notify_step()
+            tox(docker_tag, python_cmd, tox_env),
+            notify_step(),
         ]
+    }
+
+
+# Builds a single python test step
+def tox(docker_tag, python_cmd="python", tox_env="py3"):
+    return {
+        "name": "test {}".format(docker_tag.replace(":", "")),
+        "image": docker_tag,
+        "environment": {
+            "TOXENV": tox_env,
+        },
+        "commands": [
+            "{} -V".format(python_cmd),
+            "pip install tox",
+            "tox",
+        ],
     }
 
 
