@@ -8,7 +8,7 @@ ARG ARCH=x86_64
 COPY ./build/qemu-${ARCH}-static /usr/bin/
 
 # Add common checking tools
-RUN apk --no-cache add bash=~5.0 curl=~7.66 jq=~1.6
+RUN apk --no-cache add bash=~5.0 curl=~7.67 jq=~1.6
 WORKDIR /app
 
 # Add minitor user for running as non-root
