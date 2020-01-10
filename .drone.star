@@ -156,7 +156,7 @@ def push_to_pypi(ctx):
 # Build and push docker image
 def push_docker_step(tag_suffix, arch, repo):
     return {
-        "name": "build",
+        "name": "push {}".format(tag_suffix),
         "image": "plugins/docker",
         "settings": {
             "repo": "iamthefij/minitor",
