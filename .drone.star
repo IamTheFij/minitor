@@ -3,17 +3,13 @@ def main(ctx):
     pipelines = []
 
     # Run tests
-    test_pipelines = build_test_pipelines()
-    pipelines += test_pipelines
-
-    # Wait for all tests to complete
-    pipelines.append(wait_for_all_tests(test_pipelines))
+    pipelines += build_test_pipelines()
 
     # Add pypi push pipeline
-    pipelines.append(push_to_pypi(ctx))
+    pipelines += push_to_pypi(ctx)
 
     # Add docker push pipelines
-    pipelines += docker_pipelines()
+    pipelines += push_to_docker(ctx)
 
     return pipelines
 
@@ -28,7 +24,7 @@ def get_workspace():
 
 # Builds a list of all test pipelines to be executed
 def build_test_pipelines():
-    return [
+    test_pipelines = [
         test("python:3.5"),
         test("python:3.6"),
         test("python:3.7"),
@@ -38,16 +34,21 @@ def build_test_pipelines():
         test("pypy:3", "pypy3", "pypy3"),
     ]
 
+    # Converge all tests on a single pipeline "py-tests"
+    test_pipelines.append(wait_for_all_tests(test_pipelines))
+
+    return test_pipelines
+
 
 # Waits for the completion of all test pipelines
-def wait_for_all_tests(test_pipelines):
+def wait_for_all_tests(test_pipelines, name="py-tests"):
     depends_on = []
     for pipeline in test_pipelines:
         depends_on.append(pipeline["name"])
 
     return {
         "kind": "pipeline",
-        "name": "py-tests",
+        "name": name,
         "steps": [],
         "depends_on": depends_on,
     }
@@ -57,7 +58,7 @@ def wait_for_all_tests(test_pipelines):
 def test(docker_tag, python_cmd="python", tox_env="py3"):
     return {
         "kind": "pipeline",
-        "name": "test-{}".format(docker_tag.replace(":", "")),
+        "name": "test {}".format(docker_tag.replace(":", "")),
         "workspace": get_workspace(),
         "steps": [
             {
@@ -105,9 +106,9 @@ def notify_step():
 
 # Push package to pypi
 def push_to_pypi(ctx):
-    return {
+    return [{
         "kind": "pipeline",
-        "name": "deploy-pypi",
+        "name": "deploy to pypi",
         "trigger": {
             "event": ["tag"],
             "ref": [
@@ -149,69 +150,39 @@ def push_to_pypi(ctx):
             },
             notify_step(),
         ]
-    }
+    }]
 
 
-# Deploys image to docker hub
-def push_docker(tag_suffix, arch, repo):
+# Build and push docker image
+def push_docker_step(tag_suffix, arch, repo):
     return {
-        "kind": "pipeline",
-        "name": "deploy-docker-{}".format(tag_suffix),
-        "trigger": {
-            "event": ["tag", "push"],
-            "ref": [
-                "refs/heads/master",
-                "refs/tags/v*",
+        "name": "build",
+        "image": "plugins/docker",
+        "settings": {
+            "repo": "iamthefij/minitor",
+            "auto_tag": True,
+            "auto_tag_suffix": tag_suffix,
+            "username": {
+                "from_secret": "docker_username",
+            },
+            "password": {
+                "from_secret": "docker_password",
+            },
+            "build_args": [
+                "ARCH={}".format(arch),
+                "REPO={}".format(repo),
             ],
         },
-        "workspace": get_workspace(),
-        "steps": [
-            {
-                "name": "get qemu",
-                "image": "busybox",
-                "commands": ["sh ./get_qemu.sh {}".format(arch)],
-            },
-            {
-                "name": "build",
-                "image": "plugins/docker",
-                "settings": {
-                    "repo": "iamthefij/minitor",
-                    "auto_tag": True,
-                    "auto_tag_suffix": tag_suffix,
-                    "username": {
-                        "from_secret": "docker_username",
-                    },
-                    "password": {
-                        "from_secret": "docker_password",
-                    },
-                    "build_args": [
-                        "ARCH={}".format(arch),
-                        "REPO={}".format(repo),
-                    ],
-                },
-            },
-        ],
     }
 
 
-# generate all docker pipelines to push images and manifest
-def docker_pipelines():
-    # build list of images to push
-    docker_pipelines = [
-        push_docker("linux-amd64", "x86_64", "library"),
-        push_docker("linux-arm", "arm", "arm32v6"),
-        push_docker("linux-arm64", "aarch64", "arm64v8"),
-    ]
-
-    # build list of dependencies
-    pipeline_names = []
-    for pipeline in docker_pipelines:
-        pipeline_names.append(pipeline["name"])
-
-    # append manifest pipeline
-    docker_pipelines.append({
+# Builds a pipeline to push to docker
+def push_to_docker(ctx):
+    return [{
         "kind": "pipeline",
-        "name": "deploy-docker-manifest",
+        "name": "push to docker",
+        "depends_on": ["py-tests"],
+        "workspace": get_workspace(),
         "trigger": {
             "event": ["tag"],
             "ref": [
@@ -219,23 +190,27 @@ def docker_pipelines():
                 "refs/tags/v*",
             ],
         },
-        "workspace": get_workspace(),
-        "depends_on": pipeline_names,
-        "steps": [{
-            "name": "publish manifest",
-            "image": "plugins/manifest",
-            "settings": {
-                "spec": "manifest.tmpl",
-                "auto_tag": True,
-                "ignore_missing": True,
-                "username": {
-                    "from_secret": "docker_username",
-                },
-                "password": {
-                    "from_secret": "docker_password",
-                },
-            }
-        }],
-    })
+        "steps": [
+            push_docker_step("linux-amd64", "x86_64", "library"),
+            push_docker_step("linux-arm", "arm", "arm32v6"),
+            push_docker_step("linux-arm64", "aarch64", "arm64v8"),
+            {
+                "name": "publish manifest",
+                "image": "plugins/manifest",
+                "settings": {
+                    "spec": "manifest.tmpl",
+                    "auto_tag": True,
+                    "ignore_missing": True,
+                    "username": {
+                        "from_secret": "docker_username",
+                    },
+                    "password": {
+                        "from_secret": "docker_password",
+                    },
+                }
+            },
+            notify_step(),
+        ],
+    }]
 
-    return docker_pipelines
+# vim: ft=python
