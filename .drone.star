@@ -160,7 +160,7 @@ def push_to_docker(ctx):
     return [{
         "kind": "pipeline",
         "name": "push to docker",
-        "depends_on": ["tests"],
+        # "depends_on": ["tests"],
         "workspace": get_workspace(),
         "trigger": {
             "event": ["tag", "push"],
