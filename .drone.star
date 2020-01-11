@@ -3,10 +3,10 @@ def main(ctx):
     pipelines = []
 
     # Run tests
-    pipelines += run_tests()
+    # pipelines += run_tests()
 
     # Add pypi push pipeline
-    pipelines += push_to_pypi(ctx)
+    # pipelines += push_to_pypi(ctx)
 
     # Add docker push pipelines
     pipelines += push_to_docker(ctx)
