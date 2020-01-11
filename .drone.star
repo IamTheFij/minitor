@@ -170,6 +170,11 @@ def push_to_docker(ctx):
             ],
         },
         "steps": [
+            {
+                "name": "get qemu",
+                "image": "busybox",
+                "commands": ["sh ./get_qemu.sh x86_64 arm aarch64"],
+            },
             push_docker_step("linux-amd64", "x86_64", "library"),
             push_docker_step("linux-arm", "arm", "arm32v6"),
             push_docker_step("linux-arm64", "aarch64", "arm64v8"),
