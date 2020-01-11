@@ -3,7 +3,7 @@ def main(ctx):
     pipelines = []
 
     # Run tests
-    pipelines += build_test_pipelines()
+    pipelines += run_tests()
 
     # Add pypi push pipeline
     pipelines += push_to_pypi(ctx)
@@ -23,52 +23,26 @@ def get_workspace():
 
 
 # Builds a list of all test pipelines to be executed
-def build_test_pipelines():
-    test_pipelines = [
-        test_pipeline("python:3.5"),
-        test_pipeline("python:3.6"),
-        test_pipeline("python:3.7"),
-        test_pipeline("python:3.8"),
-        test_pipeline("python:3"),
-        test_pipeline("pypy:3.6", "pypy3", "pypy3"),
-        test_pipeline("pypy:3", "pypy3", "pypy3"),
-    ]
-
-    # Converge all tests on a single pipeline "py-tests"
-    test_pipelines.append(wait_for_all_tests(test_pipelines))
-
-    return test_pipelines
-
-
-# Waits for the completion of all test pipelines
-def wait_for_all_tests(test_pipelines, name="py-tests"):
-    depends_on = []
-    for pipeline in test_pipelines:
-        depends_on.append(pipeline["name"])
-
-    return {
+def run_tests():
+    return [{
         "kind": "pipeline",
-        "name": name,
-        "steps": [],
-        "depends_on": depends_on,
-    }
-
-
-# Builds a single test pipeline
-def test_pipeline(docker_tag, python_cmd="python", tox_env="py3"):
-    return {
-        "kind": "pipeline",
-        "name": "test {}".format(docker_tag.replace(":", "")),
+        "name": "tests",
         "workspace": get_workspace(),
         "steps": [
-            tox(docker_tag, python_cmd, tox_env),
+            tox_step("python:3.5"),
+            tox_step("python:3.6"),
+            tox_step("python:3.7"),
+            tox_step("python:3.8"),
+            tox_step("python:3"),
+            tox_step("pypy:3.6", "pypy3", "pypy3"),
+            tox_step("pypy:3", "pypy3", "pypy3"),
             notify_step(),
-        ]
-    }
+        ],
+    }]
 
 
 # Builds a single python test step
-def tox(docker_tag, python_cmd="python", tox_env="py3"):
+def tox_step(docker_tag, python_cmd="python", tox_env="py3"):
     return {
         "name": "test {}".format(docker_tag.replace(":", "")),
         "image": docker_tag,
@@ -114,6 +88,8 @@ def push_to_pypi(ctx):
     return [{
         "kind": "pipeline",
         "name": "deploy to pypi",
+        "depends_on": ["tests"],
+        "workspace": get_workspace(),
         "trigger": {
             "event": ["tag"],
             "ref": [
@@ -121,8 +97,6 @@ def push_to_pypi(ctx):
                 "refs/tags/v*",
             ],
         },
-        "depends_on": ["py-tests"],
-        "workspace": get_workspace(),
         "steps": [
             {
                 "name": "push to test pypi",
@@ -186,7 +160,7 @@ def push_to_docker(ctx):
     return [{
         "kind": "pipeline",
         "name": "push to docker",
-        "depends_on": ["py-tests"],
+        "depends_on": ["tests"],
         "workspace": get_workspace(),
         "trigger": {
             "event": ["tag", "push"],
