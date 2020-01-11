@@ -3,10 +3,10 @@ def main(ctx):
     pipelines = []
 
     # Run tests
-    # pipelines += run_tests()
+    pipelines += run_tests()
 
     # Add pypi push pipeline
-    # pipelines += push_to_pypi(ctx)
+    pipelines += push_to_pypi(ctx)
 
     # Add docker push pipelines
     pipelines += push_to_docker(ctx)
@@ -160,7 +160,7 @@ def push_to_docker(ctx):
     return [{
         "kind": "pipeline",
         "name": "push to docker",
-        # "depends_on": ["tests"],
+        "depends_on": ["tests"],
         "workspace": get_workspace(),
         "trigger": {
             "event": ["tag", "push"],
