@@ -24,7 +24,7 @@ COPY ./sample-config.yml /app/config.yml
 COPY ./README.md /app/
 COPY ./setup.py /app/
 COPY ./minitor /app/minitor
-RUN pip install -e .
+RUN pip install --no-cache-dir -e .
 
 # Copy scripts
 COPY ./scripts /app/scripts
