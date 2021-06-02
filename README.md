@@ -2,6 +2,10 @@
 
 A minimal monitoring system
 
+## Important
+
+*This has been more or less replaced by a version written in Go. Check out [minitor-go](/iamthefij/minitor-go)*. There are no known issues with this version, but it is not really maintained anymore as I've migrated to the Go version since it uses fewer system resources.
+
 ## What does it do?
 
 Minitor accepts a YAML configuration file with a set of commands to run and a set of alerts to execute when those commands fail. It is designed to be as simple as possible and relies on other command line tools to do checks and issue alerts.
