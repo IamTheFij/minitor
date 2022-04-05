@@ -29,10 +29,10 @@ def run_tests():
         "name": "tests",
         "workspace": get_workspace(),
         "steps": [
-            tox_step("python:3.5"),
-            tox_step("python:3.6"),
             tox_step("python:3.7"),
             tox_step("python:3.8"),
+            tox_step("python:3.9"),
+            tox_step("python:3.10"),
             tox_step("python:3"),
             tox_step("pypy:3.6", "pypy3", "pypy3"),
             tox_step("pypy:3", "pypy3", "pypy3"),
