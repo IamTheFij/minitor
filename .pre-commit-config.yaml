@@ -1,16 +1,14 @@
 repos:
+  - repo: https://github.com/psf/black
+    rev: 22.3.0
+    hooks:
+      - id: black
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v1.2.3
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
-      - id: autopep8-wrapper
-        args:
-        - -i
-        - --ignore=E265,E309,E501
       - id: debug-statements
-        language_version: python3
-      - id: flake8
         language_version: python3
       - id: check-yaml
         args:
