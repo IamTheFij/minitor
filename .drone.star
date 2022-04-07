@@ -34,8 +34,8 @@ def run_tests():
             tox_step("python:3.9"),
             tox_step("python:3.10"),
             tox_step("python:3"),
-            tox_step("pypy:3.9", "pypy3", "pypy3"),
-            tox_step("pypy:3", "pypy3", "pypy3"),
+            # tox_step("pypy:3.9", "pypy3", "pypy3"),
+            # tox_step("pypy:3", "pypy3", "pypy3"),
             notify_step(),
         ],
     }]
