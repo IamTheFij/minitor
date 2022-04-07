@@ -47,7 +47,6 @@ setup(
         "prometheus_client",
         "yamlenv",
     ],
-    scripts=["scripts/docker_check.sh"],
     entry_points={
         "console_scripts": [
             "minitor=minitor.main:main",
