@@ -4,7 +4,7 @@ A minimal monitoring system
 
 ## Important
 
-*This has been more or less replaced by a version written in Go. Check out [minitor-go](/iamthefij/minitor-go)*. There are no known issues with this version, but it is not really maintained anymore as I've migrated to the Go version since it uses fewer system resources.
+*This has been more or less replaced by a version written in Go. Check out [minitor-go](https://git.iamthefij.com/iamthefij/minitor-go)*. There are no known issues with this version, but it is not really maintained anymore as I've migrated to the Go version since it uses fewer system resources.
 
 ## What does it do?
 
